@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提示词保管箱</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 登录视图 -->
+        <div id="login-view" class="view">
+            <div class="login-container">
+                <h1>提示词保管箱</h1>
+                <p>使用 GitHub 账号登录，同步你的提示词</p>
+                <button id="github-login" class="btn-primary">使用 GitHub 登录</button>
+            </div>
+        </div>
+
+        <!-- 主视图 -->
+        <div id="main-view" class="view hidden">
+            <!-- 侧边栏 -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>提示词</h2>
+                    <button id="new-prompt" class="btn-icon">+</button>
+                </div>
+                <input type="search" id="search" placeholder="搜索提示词...">
+                <div id="category-list" class="category-list"></div>
+                <div id="prompt-list" class="prompt-list"></div>
+            </aside>
+
+            <!-- 内容区 -->
+            <main class="content">
+                <div id="empty-state" class="empty-state">
+                    <p>选择一个提示词或创建新的</p>
+                </div>
+                <div id="prompt-editor" class="prompt-editor hidden">
+                    <input type="text" id="prompt-title" placeholder="标题">
+                    <div class="editor-toolbar">
+                        <select id="prompt-category">
+                            <option value="">选择分类</option>
+                        </select>
+                        <input type="text" id="prompt-tags" placeholder="标签（逗号分隔）">
+                    </div>
+                    <textarea id="prompt-content" placeholder="提示词内容..."></textarea>
+                    <div class="editor-actions">
+                        <button id="copy-prompt" class="btn-secondary">复制</button>
+                        <button id="delete-prompt" class="btn-danger">删除</button>
+                        <button id="save-prompt" class="btn-primary">保存</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
