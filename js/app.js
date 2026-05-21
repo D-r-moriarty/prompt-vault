@@ -2,11 +2,6 @@ const App = {
     async init() {
         const token = API.getToken();
 
-        if (window.location.search.includes('code=')) {
-            await this.handleOAuthCallback();
-            return;
-        }
-
         if (token) {
             await this.loadApp(token);
         } else {
@@ -38,35 +33,45 @@ const App = {
             }
         } catch (error) {
             console.error('Failed to load data:', error);
-            Components.showToast('加载数据失败', 'error');
-        }
-    },
-
-    async handleOAuthCallback() {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        const state = params.get('state');
-
-        try {
-            const token = await API.handleCallback(code, state);
-            await this.loadApp(token);
-
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (error) {
-            console.error('OAuth failed:', error);
-            Components.showToast('登录失败', 'error');
+            Components.showToast('加载数据失败，请检查 Token 是否有效', 'error');
+            API.logout();
         }
     },
 
     bindEvents() {
-        document.getElementById('github-login').addEventListener('click', () => API.login());
+        // 创建 Token 按钮
+        document.getElementById('create-token').addEventListener('click', () => {
+            API.openTokenPage();
+        });
 
+        // 提交 Token
+        document.getElementById('submit-token').addEventListener('click', () => {
+            const tokenInput = document.getElementById('token-input');
+            const token = tokenInput.value.trim();
+
+            if (!token) {
+                Components.showToast('请输入 Token', 'error');
+                return;
+            }
+
+            // 验证 Token 格式 (应该以 ghp_ 开头)
+            if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+                Components.showToast('Token 格式不正确', 'error');
+                return;
+            }
+
+            API.saveToken(token);
+            this.loadApp(token);
+        });
+
+        // 新建提示词
         document.getElementById('new-prompt').addEventListener('click', async () => {
             const prompt = Store.addPrompt({ title: '新提示词' });
             await this.syncToGist();
             Store.setState({ activePromptId: prompt.id });
         });
 
+        // 保存提示词
         document.getElementById('save-prompt').addEventListener('click', async () => {
             const active = Store.getActivePrompt();
             if (!active) return;
@@ -81,12 +86,14 @@ const App = {
             Components.showToast('保存成功', 'success');
         });
 
+        // 复制提示词
         document.getElementById('copy-prompt').addEventListener('click', async () => {
             const content = document.getElementById('prompt-content').value;
             await navigator.clipboard.writeText(content);
             Components.showToast('已复制到剪贴板', 'success');
         });
 
+        // 删除提示词
         document.getElementById('delete-prompt').addEventListener('click', async () => {
             const active = Store.getActivePrompt();
             if (!active) return;
@@ -98,6 +105,7 @@ const App = {
             }
         });
 
+        // 搜索
         document.getElementById('search').addEventListener('input', (e) => {
             const results = Store.searchPrompts(e.target.value);
             Components.renderPromptList(results, Store.state.activePromptId);

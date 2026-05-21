@@ -12,8 +12,12 @@
         <div id="login-view" class="view">
             <div class="login-container">
                 <h1>提示词保管箱</h1>
-                <p>使用 GitHub 账号登录，同步你的提示词</p>
-                <button id="github-login" class="btn-primary">使用 GitHub 登录</button>
+                <p>需要 GitHub Personal Access Token 来同步数据</p>
+                <button id="create-token" class="btn-secondary">创建 Token</button>
+                <div class="token-input-container">
+                    <input type="text" id="token-input" placeholder="粘贴你的 Token">
+                    <button id="submit-token" class="btn-primary">确认</button>
+                </div>
             </div>
         </div>
 

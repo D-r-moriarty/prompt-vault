@@ -37,6 +37,21 @@ body {
 .login-container h1 { font-size: 2rem; }
 .login-container p { color: var(--text-secondary); }
 
+/* Token 输入 */
+.token-input-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+#token-input {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    width: 300px;
+    font-family: monospace;
+}
+
 /* 主视图布局 */
 #main-view {
     display: grid;
