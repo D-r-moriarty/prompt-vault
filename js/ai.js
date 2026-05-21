@@ -3,10 +3,9 @@ const AI = {
     suggestions: [],
 
     // Main analyze function - tries AI first, falls back to keyword
-    async analyzePrompts(prompts, apiKey, provider = 'claude') {
+    async analyzePrompts(prompts, apiKey, provider = 'minimax') {
         this.suggestions = [];
 
-        // Try real AI first if API key is provided
         if (apiKey && apiKey.trim()) {
             try {
                 await this.analyzeWithAI(prompts, apiKey, provider);
@@ -17,15 +16,14 @@ const AI = {
             }
         }
 
-        // Fallback to keyword-based analysis
         return this.analyzeWithKeywords(prompts);
     },
 
-    // Real AI analysis using Claude or OpenAI
+    // Real AI analysis using MiniMax, Claude, or OpenAI
     async analyzeWithAI(prompts, apiKey, provider) {
         const promptList = prompts.slice(0, 50).map(p => ({
             title: p.title,
-            content: p.content.substring(0, 200),
+            content: p.content.substring(0, 300),
             category: p.category || '未分类',
             tags: p.tags || []
         }));
@@ -42,7 +40,9 @@ const AI = {
 请严格返回JSON，不要有其他内容。`;
 
         let response;
-        if (provider === 'openai') {
+        if (provider === 'minimax') {
+            response = await this.callMiniMax(apiKey, systemPrompt, JSON.stringify(promptList));
+        } else if (provider === 'openai') {
             response = await this.callOpenAI(apiKey, systemPrompt, JSON.stringify(promptList));
         } else {
             response = await this.callClaude(apiKey, systemPrompt, JSON.stringify(promptList));
@@ -56,9 +56,35 @@ const AI = {
             }));
         } catch (e) {
             console.error('Failed to parse AI response:', e);
-            // Fall back to keyword analysis
             return this.analyzeWithKeywords(prompts);
         }
+    },
+
+    // Call MiniMax API
+    async callMiniMax(apiKey, systemPrompt, userPrompt) {
+        const response = await fetch('https://api.minimax.chat/v1/text/chatcompletion_pro', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'MiniMax-Text-01',
+                stream: false,
+                max_tokens: 4096,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`MiniMax API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
     },
 
     // Call Claude API
@@ -116,7 +142,6 @@ const AI = {
     analyzeWithKeywords(prompts) {
         this.suggestions = [];
 
-        // 1. Detect uncategorized prompts
         const uncategorized = prompts.filter(p => !p.category || p.category === '');
         if (uncategorized.length > 0) {
             this.suggestions.push({
@@ -127,7 +152,6 @@ const AI = {
             });
         }
 
-        // 2. Detect similar titles
         const similarGroups = this.findSimilarTitles(prompts);
         similarGroups.forEach(group => {
             this.suggestions.push({
@@ -138,13 +162,11 @@ const AI = {
             });
         });
 
-        // 3. Suggest categories based on keywords
         prompts.forEach(prompt => {
             const suggested = this.suggestCategoryForPrompt(prompt);
             if (suggested && (!prompt.category || prompt.category === '')) {
                 this.suggestions.push({
                     type: 'category-hint',
-                    title: `建议归类`,
                     prompt,
                     suggestedCategory: suggested,
                     action: () => this.applyCategory(prompt.id, suggested)
@@ -152,13 +174,11 @@ const AI = {
             }
         });
 
-        // 4. Suggest better titles
         prompts.forEach(prompt => {
             const suggestedTitle = this.suggestBetterTitle(prompt);
             if (suggestedTitle) {
                 this.suggestions.push({
                     type: 'title-hint',
-                    title: `优化标题`,
                     prompt,
                     suggestedTitle,
                     action: () => this.applyTitle(prompt.id, suggestedTitle)
@@ -169,7 +189,6 @@ const AI = {
         return this.suggestions;
     },
 
-    // Find similar titles
     findSimilarTitles(prompts) {
         const groups = [];
         const processed = new Set();
@@ -202,11 +221,11 @@ const AI = {
 
     suggestCategoryForPrompt(prompt) {
         const keywords = {
-            '写作': ['写', '文案', '文章', '创作', '邮件', '报告', '故事', '小说', '写作'],
-            '代码': ['代码', '编程', '函数', '调试', '重构', 'code', 'debug', '开发', '程序员'],
+            '写作': ['写', '文案', '文章', '创作', '邮件', '报告', '故事', '小说'],
+            '代码': ['代码', '编程', '函数', '调试', '重构', 'code', 'debug', '开发'],
             '翻译': ['翻译', 'convert', '转换', '语言', '英文', '中文'],
-            '分析': ['分析', '研究', '评估', '统计', '数据', '报告'],
-            '对话': ['对话', '聊天', '问答', 'assistant', '角色', '对话']
+            '分析': ['分析', '研究', '评估', '统计', '数据'],
+            '对话': ['对话', '聊天', '问答', 'assistant', '角色']
         };
 
         const content = (prompt.title + ' ' + prompt.content).toLowerCase();
@@ -231,7 +250,7 @@ const AI = {
 
         const unclearPatterns = [/^(help|test|temp|tmp|new|sample)/i, /^\d+$/];
         if (unclearPatterns.some(p => p.test(title))) {
-            return null; // Too vague to suggest
+            return null;
         }
 
         return null;
@@ -290,7 +309,7 @@ const AI = {
             return;
         }
 
-        container.innerHTML = this.suggestions.map((s, i) => {
+        container.innerHTML = this.suggestions.map((s) => {
             if (s.type === 'uncategorized') {
                 return `
                     <div class="ai-suggestion-card">

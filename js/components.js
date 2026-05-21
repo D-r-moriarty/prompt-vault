@@ -1,6 +1,7 @@
 // Components Module - Updated for Features
 const Components = {
     selectedPrompts: new Set(),
+    selectMode: false,
 
     // Render prompt cards grid
     renderPromptGrid(prompts, activeId) {
@@ -17,7 +18,28 @@ const Components = {
         if (emptyState) emptyState.classList.add('hidden');
         grid.classList.remove('hidden');
 
-        grid.innerHTML = prompts.map((prompt, index) => `
+        // Add select mode class to grid
+        if (this.selectMode) {
+            grid.classList.add('select-mode');
+        } else {
+            grid.classList.remove('select-mode');
+        }
+
+        let headerHtml = '';
+        if (this.selectMode) {
+            const selectedCount = this.selectedPrompts.size;
+            headerHtml = `
+                <div class="select-all-header">
+                    <span>已选择 ${selectedCount} / ${prompts.length} 项</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="Components.selectAll(${prompts.length})">全选</button>
+                        <button class="btn btn-ghost" onclick="Components.clearSelection()">取消</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        const cardsHtml = prompts.map((prompt, index) => `
             <div class="prompt-card ${this.selectedPrompts.has(prompt.id) ? 'selected' : ''}"
                  data-id="${prompt.id}"
                  style="animation-delay: ${index * 50}ms"
@@ -28,6 +50,7 @@ const Components = {
                 <div class="prompt-card-header">
                     <span class="prompt-card-icon">${prompt.category ? this.getCategoryIcon(prompt.category) : '📝'}</span>
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
+                    ${this.selectMode ? `<button class="btn btn-ghost btn-icon" onclick="event.stopPropagation(); Components.deletePrompt('${prompt.id}')" style="margin-left: auto; color: var(--danger);">🗑️</button>` : ''}
                 </div>
                 <p class="prompt-card-content">${this.escapeHtml(prompt.content.substring(0, 100))}</p>
                 ${prompt.tags && prompt.tags.length > 0 ? `
@@ -42,12 +65,38 @@ const Components = {
                 </div>
             </div>
         `).join('');
+
+        grid.innerHTML = headerHtml + cardsHtml;
+    },
+
+    toggleSelectMode() {
+        this.selectMode = !this.selectMode;
+        const btn = document.getElementById('select-mode-btn');
+        if (btn) {
+            if (this.selectMode) {
+                btn.classList.add('btn-primary');
+                btn.classList.remove('btn-secondary');
+                btn.innerHTML = '<span>☑️</span> 完成';
+            } else {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+                btn.innerHTML = '<span>☐</span> 选择';
+            }
+        }
+        this.clearSelection();
+        Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
     },
 
     handleCardClick(event, id) {
         if (event.target.classList.contains('prompt-checkbox')) return;
-        Store.setState({ activePromptId: id });
-        App.openEditor(id);
+        if (event.target.classList.contains('btn-icon')) return;
+
+        if (this.selectMode) {
+            this.toggleSelection(id);
+        } else {
+            Store.setState({ activePromptId: id });
+            App.openEditor(id);
+        }
     },
 
     toggleSelection(id) {
@@ -57,12 +106,11 @@ const Components = {
             this.selectedPrompts.add(id);
         }
         this.updateBatchActions();
-        // Re-render to show selection state
         Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
     },
 
-    selectAll(prompts) {
-        prompts.forEach(p => this.selectedPrompts.add(p.id));
+    selectAll(count) {
+        Store.state.prompts.forEach(p => this.selectedPrompts.add(p.id));
         this.updateBatchActions();
         Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
     },
@@ -70,7 +118,17 @@ const Components = {
     clearSelection() {
         this.selectedPrompts.clear();
         this.updateBatchActions();
-        Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
+    },
+
+    deletePrompt(id) {
+        if (confirm('确定要删除这个提示词吗？')) {
+            Store.deletePrompt(id);
+            this.selectedPrompts.delete(id);
+            App.syncToGist();
+            Components.showToast('已删除', 'success');
+            Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
+            this.updateBatchActions();
+        }
     },
 
     updateBatchActions() {
@@ -189,6 +247,7 @@ const Components = {
                 <div class="settings-item">
                     <span class="settings-label">AI 提供商</span>
                     <select id="ai-provider" style="width: 120px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);">
+                        <option value="minimax" ${settings.aiProvider === 'minimax' ? 'selected' : ''}>MiniMax</option>
                         <option value="claude" ${settings.aiProvider === 'claude' ? 'selected' : ''}>Claude</option>
                         <option value="openai" ${settings.aiProvider === 'openai' ? 'selected' : ''}>OpenAI</option>
                     </select>

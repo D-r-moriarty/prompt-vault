@@ -93,6 +93,7 @@ const App = {
             if (el) el.addEventListener(event, handler);
         };
 
+        safeOn('select-mode-btn', 'click', () => Components.toggleSelectMode());
         safeOn('settings-btn', 'click', () => this.openSettings());
         safeOn('add-category-btn', 'click', () => this.openModal('add-category-modal'));
         safeOn('new-prompt-btn', 'click', () => this.createNewPrompt());
