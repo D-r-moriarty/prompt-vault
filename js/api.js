@@ -1,6 +1,6 @@
 const API = {
     CLIENT_ID: 'Ov23li7TuaO62WuLS0TN',
-    REDIRECT_URI: window.location.origin + '/callback.html',
+    REDIRECT_URI: 'https://D-r-moriarty.github.io/prompt-vault/callback.html',
 
     generateState() {
         return Math.random().toString(36).substring(2, 15);
