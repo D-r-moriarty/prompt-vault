@@ -6,14 +6,14 @@ const App = {
     async init() {
         const token = API.getToken();
 
+        this.bindEvents();
+
         if (token) {
             await this.loadApp(token);
+            this.bindStoreListener();
         } else {
             this.showLogin();
         }
-
-        this.bindEvents();
-        this.bindStoreListener();
     },
 
     showLogin() {
@@ -78,6 +78,7 @@ const App = {
                 Store.loadFromGist({ id: data.id, filename: 'prompts.json', content: data.content });
             }
             this.updateSyncStatus('已同步', false);
+            this.bindStoreListener();
         } catch (error) {
             console.error('Failed to load data:', error);
             Components.showToast('加载数据失败，请检查 Token', 'error');
@@ -86,119 +87,82 @@ const App = {
     },
 
     bindEvents() {
-        // New prompt button
-        document.getElementById('new-prompt-btn').addEventListener('click', () => {
-            this.createNewPrompt();
-        });
+        // Helper to safely add event listener
+        const safeOn = (id, event, handler) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
+        };
 
-        document.getElementById('empty-create-btn')?.addEventListener('click', () => {
-            this.createNewPrompt();
-        });
+        // New prompt button
+        safeOn('new-prompt-btn', 'click', () => this.createNewPrompt());
+        safeOn('empty-create-btn', 'click', () => this.createNewPrompt());
 
         // Search
-        document.getElementById('search').addEventListener('input', (e) => {
+        safeOn('search', 'input', (e) => {
             const results = Store.searchPrompts(e.target.value);
             Components.renderPromptGrid(results, Store.state.activePromptId);
         });
 
         // Import button
-        document.getElementById('import-btn').addEventListener('click', () => {
-            this.openModal('import-modal');
-        });
+        safeOn('import-btn', 'click', () => this.openModal('import-modal'));
 
         // Export button
-        document.getElementById('export-btn').addEventListener('click', () => {
-            this.openModal('export-modal');
-        });
+        safeOn('export-btn', 'click', () => this.openModal('export-modal'));
 
         // AI button
-        document.getElementById('ai-btn').addEventListener('click', () => {
-            document.getElementById('ai-panel').classList.add('open');
+        safeOn('ai-btn', 'click', () => {
+            const panel = document.getElementById('ai-panel');
+            if (panel) panel.classList.add('open');
         });
 
         // AI panel close
-        document.getElementById('ai-close').addEventListener('click', () => {
-            document.getElementById('ai-panel').classList.remove('open');
+        safeOn('ai-close', 'click', () => {
+            const panel = document.getElementById('ai-panel');
+            if (panel) panel.classList.remove('open');
         });
 
         // AI actions
-        document.getElementById('ai-organize').addEventListener('click', () => {
-            this.runAIOrganize();
-        });
-
-        document.getElementById('ai-detect-duplicates').addEventListener('click', () => {
-            this.runAIDuplicates();
-        });
-
-        document.getElementById('ai-optimize-names').addEventListener('click', () => {
-            this.runAIOptimize();
-        });
+        safeOn('ai-organize', 'click', () => this.runAIOrganize());
+        safeOn('ai-detect-duplicates', 'click', () => this.runAIDuplicates());
+        safeOn('ai-optimize-names', 'click', () => this.runAIOptimize());
 
         // Editor modal
-        document.getElementById('editor-close').addEventListener('click', () => {
-            this.closeModal('editor-modal');
-        });
-
-        document.getElementById('editor-cancel').addEventListener('click', () => {
-            this.closeModal('editor-modal');
-        });
-
-        document.getElementById('editor-save').addEventListener('click', () => {
-            this.savePrompt();
-        });
-
-        document.getElementById('editor-delete').addEventListener('click', () => {
-            this.deleteCurrentPrompt();
-        });
+        safeOn('editor-close', 'click', () => this.closeModal('editor-modal'));
+        safeOn('editor-cancel', 'click', () => this.closeModal('editor-modal'));
+        safeOn('editor-save', 'click', () => this.savePrompt());
+        safeOn('editor-delete', 'click', () => this.deleteCurrentPrompt());
 
         // Import modal
-        document.getElementById('import-close').addEventListener('click', () => {
-            this.closeModal('import-modal');
-        });
-
-        document.getElementById('import-cancel').addEventListener('click', () => {
-            this.closeModal('import-modal');
-        });
-
-        document.getElementById('import-confirm').addEventListener('click', () => {
-            this.importPrompts();
-        });
+        safeOn('import-close', 'click', () => this.closeModal('import-modal'));
+        safeOn('import-cancel', 'click', () => this.closeModal('import-modal'));
+        safeOn('import-confirm', 'click', () => this.importPrompts());
 
         // Drop zone
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
-
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            this.handleFile(file);
-        });
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            this.handleFile(file);
-        });
+        if (dropZone && fileInput) {
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                this.handleFile(file);
+            });
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                this.handleFile(file);
+            });
+        }
 
         // Export modal
-        document.getElementById('export-close').addEventListener('click', () => {
-            this.closeModal('export-modal');
-        });
-
-        document.getElementById('export-cancel').addEventListener('click', () => {
-            this.closeModal('export-modal');
-        });
-
-        document.getElementById('export-confirm').addEventListener('click', () => {
-            this.exportPrompts();
-        });
+        safeOn('export-close', 'click', () => this.closeModal('export-modal'));
+        safeOn('export-cancel', 'click', () => this.closeModal('export-modal'));
+        safeOn('export-confirm', 'click', () => this.exportPrompts());
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -209,7 +173,8 @@ const App = {
                 }
                 if (e.key === 'f') {
                     e.preventDefault();
-                    document.getElementById('search').focus();
+                    const search = document.getElementById('search');
+                    if (search) search.focus();
                 }
                 if (e.key === 'i') {
                     e.preventDefault();
@@ -221,14 +186,16 @@ const App = {
                 }
                 if (e.key === 'k') {
                     e.preventDefault();
-                    document.getElementById('ai-panel').classList.toggle('open');
+                    const panel = document.getElementById('ai-panel');
+                    if (panel) panel.classList.toggle('open');
                 }
             }
             if (e.key === 'Escape') {
                 this.closeModal('editor-modal');
                 this.closeModal('import-modal');
                 this.closeModal('export-modal');
-                document.getElementById('ai-panel').classList.remove('open');
+                const aiPanel = document.getElementById('ai-panel');
+                if (aiPanel) aiPanel.classList.remove('open');
             }
         });
     },
