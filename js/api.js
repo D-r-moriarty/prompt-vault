@@ -1,5 +1,5 @@
 const API = {
-    CLIENT_ID: 'YOUR_GITHUB_CLIENT_ID',
+    CLIENT_ID: 'Ov23li7TuaO62WuLS0TN',
     REDIRECT_URI: window.location.origin + '/callback.html',
 
     generateState() {
@@ -25,7 +25,7 @@ const API = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 client_id: this.CLIENT_ID,
-                client_secret: 'YOUR_GITHUB_CLIENT_SECRET',
+                client_secret: '564e329bc8eb228fdcd8e44319acbc0e2bbb8c79',
                 code,
                 state
             })
