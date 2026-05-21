@@ -1,38 +1,149 @@
-/* CSS Variables - Craft Workshop Theme */
+/* CSS Variables - Multiple Themes */
+
+/* ========================================
+   Theme 1: Craft Workshop (Light)
+   ======================================== */
+[data-theme="light"] {
+    --primary: #F59E0B;
+    --primary-hover: #D97706;
+    --primary-light: #FEF3C7;
+    --danger: #EA580C;
+    --success: #84CC16;
+
+    --bg: #FAF7F2;
+    --bg-dark: #F5F0E8;
+    --surface: #FFFFFF;
+    --surface-hover: #FEF3C7;
+
+    --text: #1C1917;
+    --text-muted: #57534E;
+    --text-light: #A8A29E;
+
+    --border: rgba(168, 162, 158, 0.2);
+    --border-strong: rgba(168, 162, 158, 0.4);
+
+    --shadow: 2px 3px 8px rgba(28, 25, 23, 0.12);
+    --shadow-lg: 0 10px 15px -3px rgba(28, 25, 23, 0.08);
+
+    --accent: #B45309;
+}
+
+/* ========================================
+   Theme 2: Midnight (Dark)
+   ======================================== */
+[data-theme="dark"] {
+    --primary: #60A5FA;
+    --primary-hover: #3B82F6;
+    --primary-light: #1E3A5F;
+    --danger: #F87171;
+    --success: #4ADE80;
+
+    --bg: #0F172A;
+    --bg-dark: #1E293B;
+    --surface: #1E293B;
+    --surface-hover: #334155;
+
+    --text: #F1F5F9;
+    --text-muted: #94A3B8;
+    --text-light: #64748B;
+
+    --border: rgba(148, 163, 184, 0.1);
+    --border-strong: rgba(148, 163, 184, 0.2);
+
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+
+    --accent: #60A5FA;
+}
+
+/* ========================================
+   Theme 3: Forest (Nature)
+   ======================================== */
+[data-theme="forest"] {
+    --primary: #22C55E;
+    --primary-hover: #16A34A;
+    --primary-light: #DCFCE7;
+    --danger: #EF4444;
+    --success: #84CC16;
+
+    --bg: #F0FDF4;
+    --bg-dark: #DCFCE7;
+    --surface: #FFFFFF;
+    --surface-hover: #DCFCE7;
+
+    --text: #14532D;
+    --text-muted: #166534;
+    --text-light: #22C55E;
+
+    --border: rgba(34, 197, 94, 0.2);
+    --border-strong: rgba(34, 197, 94, 0.4);
+
+    --shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(34, 197, 94, 0.15);
+
+    --accent: #166534;
+}
+
+/* ========================================
+   Theme 4: Ocean (Blue)
+   ======================================== */
+[data-theme="ocean"] {
+    --primary: #0EA5E9;
+    --primary-hover: #0284C7;
+    --primary-light: #E0F2FE;
+    --danger: #DC2626;
+    --success: #22C55E;
+
+    --bg: #F0F9FF;
+    --bg-dark: #E0F2FE;
+    --surface: #FFFFFF;
+    --surface-hover: #E0F2FE;
+
+    --text: #0C4A6E;
+    --text-muted: #0369A1;
+    --text-light: #0EA5E9;
+
+    --border: rgba(14, 165, 233, 0.2);
+    --border-strong: rgba(14, 165, 233, 0.4);
+
+    --shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(14, 165, 233, 0.15);
+
+    --accent: #0369A1;
+}
+
+/* ========================================
+   Theme 5: Sunset (Warm)
+   ======================================== */
+[data-theme="sunset"] {
+    --primary: #F97316;
+    --primary-hover: #EA580C;
+    --primary-light: #FFEDD5;
+    --danger: #BE123C;
+    --success: #16A34A;
+
+    --bg: #FFFBEB;
+    --bg-dark: #FED7AA;
+    --surface: #FFFFFF;
+    --surface-hover: #FFEDD5;
+
+    --text: #7C2D12;
+    --text-muted: #9A3412;
+    --text-light: #F97316;
+
+    --border: rgba(249, 115, 22, 0.2);
+    --border-strong: rgba(249, 115, 22, 0.4);
+
+    --shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(249, 115, 22, 0.15);
+
+    --accent: #9A3412;
+}
+
+/* ========================================
+   Base Variables (Common)
+   ======================================== */
 :root {
-    /* Primary - Warm Amber */
-    --amber-50: #FFFBEB;
-    --amber-100: #FEF3C7;
-    --amber-200: #FDE68A;
-    --amber-300: #FCD34D;
-    --amber-500: #F59E0B;
-    --amber-600: #D97706;
-    --amber-700: #B45309;
-
-    /* Background - Paper texture */
-    --paper: #FAF7F2;
-    --paper-dark: #F5F0E8;
-    --paper-grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-
-    /* Text - Ink tones */
-    --ink: #1C1917;
-    --ink-muted: #57534E;
-    --ink-light: #A8A29E;
-
-    /* Functional */
-    --sage: #84CC16;
-    --sage-light: #ECFCCB;
-    --terracotta: #EA580C;
-    --terracotta-light: #FFF7ED;
-    --slate: #64748B;
-    --slate-light: #F1F5F9;
-
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(28, 25, 23, 0.07), 0 2px 4px -1px rgba(28, 25, 23, 0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(28, 25, 23, 0.08), 0 4px 6px -2px rgba(28, 25, 23, 0.04);
-    --shadow-note: 2px 3px 8px rgba(28, 25, 23, 0.12);
-
     /* Spacing */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
@@ -45,6 +156,7 @@
     --radius-sm: 0.375rem;
     --radius-md: 0.5rem;
     --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
 
     /* Typography */
     --font-display: "Noto Serif SC", "Source Han Serif CN", "STSong", serif;

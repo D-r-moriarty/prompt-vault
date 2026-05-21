@@ -1,10 +1,119 @@
-// AI Assistant Module
+// AI Assistant Module - Two Layer (Real AI + Keyword Fallback)
 const AI = {
-    // Store AI suggestions
     suggestions: [],
 
-    // Analyze prompts and generate suggestions
-    async analyzePrompts(prompts) {
+    // Main analyze function - tries AI first, falls back to keyword
+    async analyzePrompts(prompts, apiKey, provider = 'claude') {
+        this.suggestions = [];
+
+        // Try real AI first if API key is provided
+        if (apiKey && apiKey.trim()) {
+            try {
+                await this.analyzeWithAI(prompts, apiKey, provider);
+                return this.suggestions;
+            } catch (error) {
+                console.log('AI analysis failed, falling back to keywords:', error);
+                Components.showToast('AI 分析失败，使用关键词匹配', 'ai');
+            }
+        }
+
+        // Fallback to keyword-based analysis
+        return this.analyzeWithKeywords(prompts);
+    },
+
+    // Real AI analysis using Claude or OpenAI
+    async analyzeWithAI(prompts, apiKey, provider) {
+        const promptList = prompts.slice(0, 50).map(p => ({
+            title: p.title,
+            content: p.content.substring(0, 200),
+            category: p.category || '未分类',
+            tags: p.tags || []
+        }));
+
+        const systemPrompt = `你是一个提示词整理助手。请分析用户的提示词集合，提出整理建议。
+
+输出格式（JSON数组）：
+[
+  {"type": "category-hint", "promptTitle": "原始标题", "suggestedCategory": "建议分类", "reason": "原因"},
+  {"type": "title-hint", "promptTitle": "原始标题", "suggestedTitle": "更好的标题", "reason": "原因"},
+  {"type": "similar", "titles": ["标题1", "标题2"], "reason": "可能重复"}
+]
+
+请严格返回JSON，不要有其他内容。`;
+
+        let response;
+        if (provider === 'openai') {
+            response = await this.callOpenAI(apiKey, systemPrompt, JSON.stringify(promptList));
+        } else {
+            response = await this.callClaude(apiKey, systemPrompt, JSON.stringify(promptList));
+        }
+
+        try {
+            const suggestions = JSON.parse(response);
+            this.suggestions = suggestions.map(s => ({
+                ...s,
+                action: () => this.applySuggestion(s)
+            }));
+        } catch (e) {
+            console.error('Failed to parse AI response:', e);
+            // Fall back to keyword analysis
+            return this.analyzeWithKeywords(prompts);
+        }
+    },
+
+    // Call Claude API
+    async callClaude(apiKey, systemPrompt, userPrompt) {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 4096,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: userPrompt }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Claude API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.content[0].text;
+    },
+
+    // Call OpenAI API
+    async callOpenAI(apiKey, systemPrompt, userPrompt) {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                max_tokens: 4096
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`OpenAI API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+    },
+
+    // Keyword-based analysis (fallback)
+    analyzeWithKeywords(prompts) {
         this.suggestions = [];
 
         // 1. Detect uncategorized prompts
@@ -14,31 +123,29 @@ const AI = {
                 type: 'uncategorized',
                 title: `${uncategorized.length} 条提示词未分类`,
                 prompts: uncategorized,
-                action: this.suggestCategories.bind(this)
+                action: () => this.batchCategorize(uncategorized)
             });
         }
 
-        // 2. Detect similar titles (potential duplicates)
+        // 2. Detect similar titles
         const similarGroups = this.findSimilarTitles(prompts);
-        if (similarGroups.length > 0) {
-            similarGroups.forEach(group => {
-                this.suggestions.push({
-                    type: 'similar',
-                    title: `可能重复的提示词`,
-                    prompts: group,
-                    action: () => this.showMergeSuggestion(group)
-                });
+        similarGroups.forEach(group => {
+            this.suggestions.push({
+                type: 'similar',
+                title: `可能重复的提示词`,
+                prompts: group,
+                action: () => this.showMergeSuggestion(group)
             });
-        }
+        });
 
-        // 3. Suggest category based on content keywords
+        // 3. Suggest categories based on keywords
         prompts.forEach(prompt => {
             const suggested = this.suggestCategoryForPrompt(prompt);
-            if (suggested && (!prompt.category || prompt.category !== suggested)) {
+            if (suggested && (!prompt.category || prompt.category === '')) {
                 this.suggestions.push({
                     type: 'category-hint',
                     title: `建议归类`,
-                    prompt: prompt,
+                    prompt,
                     suggestedCategory: suggested,
                     action: () => this.applyCategory(prompt.id, suggested)
                 });
@@ -48,39 +155,18 @@ const AI = {
         // 4. Suggest better titles
         prompts.forEach(prompt => {
             const suggestedTitle = this.suggestBetterTitle(prompt);
-            if (suggestedTitle && suggestedTitle !== prompt.title) {
+            if (suggestedTitle) {
                 this.suggestions.push({
                     type: 'title-hint',
                     title: `优化标题`,
-                    prompt: prompt,
-                    suggestedTitle: suggestedTitle,
+                    prompt,
+                    suggestedTitle,
                     action: () => this.applyTitle(prompt.id, suggestedTitle)
                 });
             }
         });
 
         return this.suggestions;
-    },
-
-    // Suggest categories based on keywords
-    suggestCategoriesForPrompts(prompts) {
-        const keywords = {
-            '写作': ['写', '文案', '文章', '创作', '邮件', '报告', '故事'],
-            '代码': ['代码', '编程', '函数', '调试', '重构', 'code', 'debug'],
-            '翻译': ['翻译', 'convert', '转换', '语言'],
-            '分析': ['分析', '研究', '评估', '统计'],
-            '对话': ['对话', '聊天', '问答', 'assistant']
-        };
-
-        return prompts.map(prompt => {
-            const content = (prompt.title + ' ' + prompt.content).toLowerCase();
-            for (const [category, words] of Object.entries(keywords)) {
-                if (words.some(w => content.includes(w))) {
-                    return { prompt, suggestedCategory: category };
-                }
-            }
-            return { prompt, suggestedCategory: null };
-        }).filter(r => r.suggestedCategory);
     },
 
     // Find similar titles
@@ -93,7 +179,7 @@ const AI = {
 
             const similar = prompts.filter((p2, j) => {
                 if (i >= j || processed.has(p2.id)) return false;
-                return this.calculateSimilarity(p1.title, p2.title) > 0.7;
+                return this.calculateSimilarity(p1.title, p2.title) > 0.6;
             });
 
             if (similar.length > 0) {
@@ -106,25 +192,21 @@ const AI = {
         return groups;
     },
 
-    // Calculate string similarity (Jaccard index)
     calculateSimilarity(str1, str2) {
         const words1 = new Set(str1.toLowerCase().split(/\s+/));
         const words2 = new Set(str2.toLowerCase().split(/\s+/));
-
         const intersection = new Set([...words1].filter(x => words2.has(x)));
         const union = new Set([...words1, ...words2]);
-
-        return intersection.size / union.size;
+        return union.size > 0 ? intersection.size / union.size : 0;
     },
 
-    // Suggest category based on content
     suggestCategoryForPrompt(prompt) {
         const keywords = {
-            '写作': ['写', '文案', '文章', '创作', '邮件', '报告', '故事', '小说'],
-            '代码': ['代码', '编程', '函数', '调试', '重构', 'code', 'debug', '开发'],
-            '翻译': ['翻译', 'convert', '转换', '语言'],
-            '分析': ['分析', '研究', '评估', '统计', '数据'],
-            '对话': ['对话', '聊天', '问答', 'assistant', '角色']
+            '写作': ['写', '文案', '文章', '创作', '邮件', '报告', '故事', '小说', '写作'],
+            '代码': ['代码', '编程', '函数', '调试', '重构', 'code', 'debug', '开发', '程序员'],
+            '翻译': ['翻译', 'convert', '转换', '语言', '英文', '中文'],
+            '分析': ['分析', '研究', '评估', '统计', '数据', '报告'],
+            '对话': ['对话', '聊天', '问答', 'assistant', '角色', '对话']
         };
 
         const content = (prompt.title + ' ' + prompt.content).toLowerCase();
@@ -138,183 +220,127 @@ const AI = {
         return null;
     },
 
-    // Suggest better title
     suggestBetterTitle(prompt) {
         const title = prompt.title;
 
-        // Check for v1, v2 etc.
-        if (/\bv\d+\b/.test(title)) {
-            const baseTitle = title.replace(/\s*v\d+/i, '').trim();
-            if (baseTitle) {
-                return baseTitle + ' (版本管理)';
-            }
+        if (/\bv\d+\b/i.test(title)) {
+            return title.replace(/\s*v\d+/i, '').trim();
         }
 
-        // Check for too short titles
-        if (title.length < 5) {
-            return null; // Don't suggest for very short titles
-        }
+        if (title.length < 5) return null;
 
-        // Check for unclear titles
-        const unclearPatterns = [
-            /^(help|test|temp|tmp|new|sample)/i,
-            /^\d+$/
-        ];
-
+        const unclearPatterns = [/^(help|test|temp|tmp|new|sample)/i, /^\d+$/];
         if (unclearPatterns.some(p => p.test(title))) {
-            return '待命名 - ' + title;
+            return null; // Too vague to suggest
         }
 
         return null;
     },
 
-    // Show merge suggestion
     showMergeSuggestion(group) {
         if (group.length < 2) return;
-
-        Components.showToast(`发现 ${group.length} 条可能重复的提示词`, 'ai');
-
-        // Open editor with first prompt, show others in suggestions
         Store.setState({ activePromptId: group[0].id });
+        Components.showToast(`发现 ${group.length} 条可能重复的提示词`, 'ai');
     },
 
-    // Apply category
     applyCategory(promptId, category) {
         Store.updatePrompt(promptId, { category });
         App.syncToGist();
         Components.showToast(`已归类到"${category}"`, 'success');
         this.removeSuggestion(promptId, 'category-hint');
+        this.renderSuggestions(document.getElementById('suggestions-list'));
     },
 
-    // Apply title
     applyTitle(promptId, title) {
         Store.updatePrompt(promptId, { title });
         App.syncToGist();
         Components.showToast('标题已更新', 'success');
         this.removeSuggestion(promptId, 'title-hint');
+        this.renderSuggestions(document.getElementById('suggestions-list'));
     },
 
-    // Remove processed suggestion
+    batchCategorize(prompts) {
+        prompts.forEach(p => {
+            const suggested = this.suggestCategoryForPrompt(p);
+            if (suggested) {
+                Store.updatePrompt(p.id, { category: suggested });
+            }
+        });
+        App.syncToGist();
+        Components.showToast('批量分类完成', 'success');
+        this.dismissSuggestion('uncategorized');
+        this.renderSuggestions(document.getElementById('suggestions-list'));
+    },
+
     removeSuggestion(promptId, type) {
         this.suggestions = this.suggestions.filter(s =>
             !(s.type === type && s.prompt && s.prompt.id === promptId)
         );
     },
 
-    // Render suggestions UI
+    dismissSuggestion(type) {
+        this.suggestions = this.suggestions.filter(s => s.type !== type);
+    },
+
     renderSuggestions(container) {
+        if (!container) return;
+
         if (this.suggestions.length === 0) {
-            container.innerHTML = '<p style="font-size: 0.875rem; color: var(--ink-light);">暂无整理建议</p>';
+            container.innerHTML = '<p style="font-size: 0.875rem; color: var(--text-light);">暂无整理建议</p>';
             return;
         }
 
-        container.innerHTML = this.suggestions.map(suggestion => {
-            if (suggestion.type === 'uncategorized') {
+        container.innerHTML = this.suggestions.map((s, i) => {
+            if (s.type === 'uncategorized') {
                 return `
                     <div class="ai-suggestion-card">
-                        <div class="ai-suggestion-header">
-                            <span>📁</span>
-                            <span>未分类提示词</span>
-                        </div>
-                        <div class="ai-suggestion-content">
-                            发现 ${suggestion.prompts.length} 条提示词尚未分类
-                        </div>
+                        <div class="ai-suggestion-header"><span>📁</span><span>未分类</span></div>
+                        <div class="ai-suggestion-content">发现 ${s.prompts.length} 条提示词尚未分类</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.batchCategorize(${JSON.stringify(suggestion.prompts.map(p => p.id))})">批量处理</button>
-                            <button class="ignore" onclick="AI.dismissSuggestion('uncategorized')">忽略</button>
+                            <button class="apply" onclick="AI.batchCategorize(${JSON.stringify(s.prompts).replace(/"/g, '&quot;')})">批量处理</button>
+                            <button class="ignore" onclick="AI.dismissSuggestion('uncategorized'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
                         </div>
                     </div>
                 `;
             }
-
-            if (suggestion.type === 'similar') {
+            if (s.type === 'similar') {
                 return `
                     <div class="ai-suggestion-card">
-                        <div class="ai-suggestion-header">
-                            <span>🔍</span>
-                            <span>可能重复</span>
-                        </div>
-                        <div class="ai-suggestion-content">
-                            ${suggestion.prompts.map(p => `"${p.title}"`).join(' 和 ')}
-                        </div>
+                        <div class="ai-suggestion-header"><span>🔍</span><span>可能重复</span></div>
+                        <div class="ai-suggestion-content">${s.prompts.map(p => `"${p.title}"`).join(' 和 ')}</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.showMergeView(${JSON.stringify(suggestion.prompts)})">查看</button>
-                            <button class="ignore" onclick="AI.dismissSuggestion('similar')">忽略</button>
+                            <button class="apply" onclick="AI.showMergeSuggestion(${JSON.stringify(s.prompts).replace(/"/g, '&quot;')})">查看</button>
+                            <button class="ignore" onclick="AI.dismissSuggestion('similar'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
                         </div>
                     </div>
                 `;
             }
-
-            if (suggestion.type === 'category-hint' && suggestion.prompt) {
+            if (s.type === 'category-hint' && s.prompt) {
                 return `
                     <div class="ai-suggestion-card">
-                        <div class="ai-suggestion-header">
-                            <span>📁</span>
-                            <span>建议归类</span>
-                        </div>
-                        <div class="ai-suggestion-content">
-                            <strong>"${suggestion.prompt.title}"</strong> → "${suggestion.suggestedCategory}"
-                        </div>
+                        <div class="ai-suggestion-header"><span>📁</span><span>建议归类</span></div>
+                        <div class="ai-suggestion-content"><strong>"${s.prompt.title}"</strong> → "${s.suggestedCategory}"</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.applyCategory('${suggestion.prompt.id}', '${suggestion.suggestedCategory}')">应用</button>
-                            <button class="ignore" onclick="AI.removeSuggestion('${suggestion.prompt.id}', 'category-hint'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
+                            <button class="apply" onclick="AI.applyCategory('${s.prompt.id}', '${s.suggestedCategory}')">应用</button>
+                            <button class="ignore" onclick="AI.removeSuggestion('${s.prompt.id}', 'category-hint'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
                         </div>
                     </div>
                 `;
             }
-
-            if (suggestion.type === 'title-hint' && suggestion.prompt) {
+            if (s.type === 'title-hint' && s.prompt) {
                 return `
                     <div class="ai-suggestion-card">
-                        <div class="ai-suggestion-header">
-                            <span>✏️</span>
-                            <span>优化标题</span>
-                        </div>
-                        <div class="ai-suggestion-content">
-                            <strong>"${suggestion.prompt.title}"</strong> → "${suggestion.suggestedTitle}"
-                        </div>
+                        <div class="ai-suggestion-header"><span>✏️</span><span>优化标题</span></div>
+                        <div class="ai-suggestion-content"><strong>"${s.prompt.title}"</strong> → "${s.suggestedTitle}"</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.applyTitle('${suggestion.prompt.id}', '${suggestion.suggestedTitle}')">应用</button>
-                            <button class="ignore" onclick="AI.removeSuggestion('${suggestion.prompt.id}', 'title-hint'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
+                            <button class="apply" onclick="AI.applyTitle('${s.prompt.id}', '${s.suggestedTitle.replace(/'/g, "\\'")}')">应用</button>
+                            <button class="ignore" onclick="AI.removeSuggestion('${s.prompt.id}', 'title-hint'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
                         </div>
                     </div>
                 `;
             }
-
             return '';
         }).join('');
-    },
-
-    // Batch categorize
-    batchCategorize(promptIds) {
-        // Simple batch categorization based on content
-        promptIds.forEach(id => {
-            const prompt = Store.state.prompts.find(p => p.id === id);
-            if (prompt) {
-                const suggested = this.suggestCategoryForPrompt(prompt);
-                if (suggested) {
-                    Store.updatePrompt(id, { category: suggested });
-                }
-            }
-        });
-
-        App.syncToGist();
-        Components.showToast('批量分类完成', 'success');
-    },
-
-    // Dismiss all suggestions of a type
-    dismissSuggestion(type) {
-        this.suggestions = this.suggestions.filter(s => s.type !== type);
-        this.renderSuggestions(document.getElementById('suggestions-list'));
-    },
-
-    // Show merge view for duplicates
-    showMergeView(prompts) {
-        if (prompts.length < 2) return;
-
-        // Set the first prompt as active
-        Store.setState({ activePromptId: prompts[0].id });
-        Components.showToast('请在编辑器中合并重复内容', 'ai');
     }
 };
 

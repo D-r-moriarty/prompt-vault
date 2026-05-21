@@ -28,6 +28,9 @@
             </div>
 
             <div class="header-right">
+                <button class="btn btn-ghost" id="settings-btn" title="设置">
+                    <span>⚙️</span>
+                </button>
                 <button class="btn btn-secondary" id="import-btn" title="导入 (⌘I)">
                     <span>📥</span> 导入
                 </button>
@@ -222,10 +225,92 @@
             </button>
 
             <div id="ai-suggestions" style="margin-top: 1rem;">
-                <h4 style="font-size: 0.875rem; color: var(--ink-muted); margin-bottom: 0.5rem;">整理建议</h4>
+                <h4 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">整理建议</h4>
                 <div id="suggestions-list">
-                    <p style="font-size: 0.875rem; color: var(--ink-light);">点击上方按钮开始 AI 整理</p>
+                    <p style="font-size: 0.875rem; color: var(--text-light);">点击上方按钮开始 AI 整理</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="add-category-modal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">新建分类</h2>
+                <button class="modal-close" onclick="App.closeModal('add-category-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="editor-field" style="margin-bottom: 1rem;">
+                    <label class="editor-label">分类名称</label>
+                    <input type="text" id="new-category-name" class="editor-input" placeholder="例如：写作">
+                </div>
+                <div class="editor-field">
+                    <label class="editor-label">图标（选择一个 emoji）</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="emoji-btn" data-icon="📝">📝</button>
+                        <button class="emoji-btn" data-icon="💡">💡</button>
+                        <button class="emoji-btn" data-icon="🎨">🎨</button>
+                        <button class="emoji-btn" data-icon="📖">📖</button>
+                        <button class="emoji-btn" data-icon="🔧">🔧</button>
+                        <button class="emoji-btn" data-icon="💬">💬</button>
+                        <button class="emoji-btn" data-icon="📊">📊</button>
+                        <button class="emoji-btn" data-icon="🌐">🌐</button>
+                        <button class="emoji-btn" data-icon="🎯">🎯</button>
+                        <button class="emoji-btn" data-icon="📁">📁</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="App.closeModal('add-category-modal')">取消</button>
+                <button class="btn btn-primary" onclick="App.addCategory()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">设置</h2>
+                <button class="modal-close" onclick="App.closeModal('settings-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="settings-content">
+                <!-- Settings content will be rendered by Components.renderSettings() -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="App.closeModal('settings-modal')">取消</button>
+                <button class="btn btn-primary" onclick="App.saveSettings()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Actions Bar -->
+    <div id="batch-actions" class="batch-actions hidden">
+        <span class="batch-count"><span id="batch-count">0</span> 已选中</span>
+        <button class="btn btn-secondary" onclick="App.batchMoveToCategory()">移动到分类</button>
+        <button class="btn btn-secondary" onclick="App.batchDelete()">删除</button>
+        <button class="btn btn-ghost" onclick="Components.clearSelection()">取消</button>
+    </div>
+
+    <!-- Move to Category Modal -->
+    <div id="move-modal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">移动到分类</h2>
+                <button class="modal-close" onclick="App.closeModal('move-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="editor-field">
+                    <label class="editor-label">选择目标分类</label>
+                    <select id="move-to-category" class="editor-select">
+                        <option value="">不指定分类</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="App.closeModal('move-modal')">取消</button>
+                <button class="btn btn-primary" onclick="App.confirmMove()">移动</button>
             </div>
         </div>
     </div>

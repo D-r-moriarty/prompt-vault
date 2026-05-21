@@ -1,5 +1,7 @@
-// Components Module - Craft Workshop Theme
+// Components Module - Updated for Features
 const Components = {
+    selectedPrompts: new Set(),
+
     // Render prompt cards grid
     renderPromptGrid(prompts, activeId) {
         const grid = document.getElementById('prompt-grid');
@@ -8,15 +10,21 @@ const Components = {
         if (!prompts || prompts.length === 0) {
             grid.innerHTML = '';
             grid.classList.add('hidden');
-            emptyState.classList.remove('hidden');
+            if (emptyState) emptyState.classList.remove('hidden');
             return;
         }
 
-        emptyState.classList.add('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
         grid.classList.remove('hidden');
 
         grid.innerHTML = prompts.map((prompt, index) => `
-            <div class="prompt-card" data-id="${prompt.id}" style="animation-delay: ${index * 50}ms">
+            <div class="prompt-card ${this.selectedPrompts.has(prompt.id) ? 'selected' : ''}"
+                 data-id="${prompt.id}"
+                 style="animation-delay: ${index * 50}ms"
+                 onclick="Components.handleCardClick(event, '${prompt.id}')">
+                <input type="checkbox" class="prompt-checkbox"
+                       ${this.selectedPrompts.has(prompt.id) ? 'checked' : ''}
+                       onclick="event.stopPropagation(); Components.toggleSelection('${prompt.id}')">
                 <div class="prompt-card-header">
                     <span class="prompt-card-icon">${prompt.category ? this.getCategoryIcon(prompt.category) : '📝'}</span>
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
@@ -34,43 +42,76 @@ const Components = {
                 </div>
             </div>
         `).join('');
+    },
 
-        // Bind click events
-        grid.querySelectorAll('.prompt-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const id = card.dataset.id;
-                Store.setState({ activePromptId: id });
-                App.openEditor(id);
-            });
-        });
+    handleCardClick(event, id) {
+        if (event.target.classList.contains('prompt-checkbox')) return;
+        Store.setState({ activePromptId: id });
+        App.openEditor(id);
+    },
+
+    toggleSelection(id) {
+        if (this.selectedPrompts.has(id)) {
+            this.selectedPrompts.delete(id);
+        } else {
+            this.selectedPrompts.add(id);
+        }
+        this.updateBatchActions();
+        // Re-render to show selection state
+        Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
+    },
+
+    selectAll(prompts) {
+        prompts.forEach(p => this.selectedPrompts.add(p.id));
+        this.updateBatchActions();
+        Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
+    },
+
+    clearSelection() {
+        this.selectedPrompts.clear();
+        this.updateBatchActions();
+        Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
+    },
+
+    updateBatchActions() {
+        const bar = document.getElementById('batch-actions');
+        const count = document.getElementById('batch-count');
+        if (bar) {
+            if (this.selectedPrompts.size > 0) {
+                bar.classList.remove('hidden');
+                if (count) count.textContent = this.selectedPrompts.size;
+            } else {
+                bar.classList.add('hidden');
+            }
+        }
     },
 
     // Render category tree in sidebar
     renderCategoryTree(categories, prompts) {
         const container = document.getElementById('category-tree');
+        if (!container) return;
 
-        // Count prompts per category
-        const categoryCounts = {};
-        prompts.forEach(p => {
-            const cat = p.category || '未分类';
-            categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-        });
+        const categoryStats = Store.getCategoryStats();
+        const totalCount = prompts.length;
+        const uncategorizedCount = Store.getUncategorizedCount();
 
         let html = `
             <li class="category-item">
-                <button class="category-btn active" data-category="">
+                <button class="category-btn ${!Store.state.activeCategoryId ? 'active' : ''}" data-category="">
                     <span class="category-icon">📚</span>
                     <span>全部</span>
-                    <span class="category-count">${prompts.length}</span>
+                    <span class="category-count">${totalCount}</span>
                 </button>
             </li>
         `;
 
         categories.forEach(cat => {
-            const count = categoryCounts[cat.name] || 0;
+            const count = categoryStats[cat.name]?.count || 0;
             html += `
                 <li class="category-item">
-                    <button class="category-btn" data-category="${this.escapeHtml(cat.name)}">
+                    <button class="category-btn ${Store.state.activeCategoryId === cat.name ? 'active' : ''}"
+                            data-category="${this.escapeHtml(cat.name)}"
+                            data-category-id="${cat.id}">
                         <span class="category-icon">${cat.icon}</span>
                         <span>${this.escapeHtml(cat.name)}</span>
                         <span class="category-count">${count}</span>
@@ -79,12 +120,10 @@ const Components = {
             `;
         });
 
-        // Add uncategorized
-        const uncategorizedCount = categoryCounts[''] || categoryCounts['未分类'] || 0;
         if (uncategorizedCount > 0) {
             html += `
                 <li class="category-item">
-                    <button class="category-btn" data-category="未分类">
+                    <button class="category-btn ${Store.state.activeCategoryId === '未分类' ? 'active' : ''}" data-category="未分类">
                         <span class="category-icon">📁</span>
                         <span>未分类</span>
                         <span class="category-count">${uncategorizedCount}</span>
@@ -95,38 +134,123 @@ const Components = {
 
         container.innerHTML = html;
 
-        // Bind events
         container.querySelectorAll('.category-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const category = btn.dataset.category;
                 Store.setState({ activeCategoryId: category === '未分类' ? '' : category });
 
-                // Update active state
                 container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // Filter prompts
-                const filtered = category ? Store.getPromptsByCategory(category) : Store.state.prompts;
+                const filtered = category === '' || category === '未分类'
+                    ? Store.state.prompts
+                    : Store.getPromptsByCategory(category);
                 this.renderPromptGrid(filtered, Store.state.activePromptId);
             });
         });
     },
 
+    // Render settings panel
+    renderSettings() {
+        const container = document.getElementById('settings-content');
+        if (!container) return;
+
+        const settings = Store.state.settings;
+
+        container.innerHTML = `
+            <div class="settings-section">
+                <h4 class="settings-title">外观</h4>
+                <div class="theme-switcher">
+                    <button class="theme-option ${settings.theme === 'light' ? 'active' : ''}"
+                            style="background: #FAF7F2"
+                            onclick="Store.setTheme('light'); Components.updateThemeUI();"
+                            title="工坊"></button>
+                    <button class="theme-option ${settings.theme === 'dark' ? 'active' : ''}"
+                            style="background: #0F172A"
+                            onclick="Store.setTheme('dark'); Components.updateThemeUI();"
+                            title="深夜"></button>
+                    <button class="theme-option ${settings.theme === 'forest' ? 'active' : ''}"
+                            style="background: #22C55E"
+                            onclick="Store.setTheme('forest'); Components.updateThemeUI();"
+                            title="森林"></button>
+                    <button class="theme-option ${settings.theme === 'ocean' ? 'active' : ''}"
+                            style="background: #0EA5E9"
+                            onclick="Store.setTheme('ocean'); Components.updateThemeUI();"
+                            title="海洋"></button>
+                    <button class="theme-option ${settings.theme === 'sunset' ? 'active' : ''}"
+                            style="background: #F97316"
+                            onclick="Store.setTheme('sunset'); Components.updateThemeUI();"
+                            title="日落"></button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4 class="settings-title">AI 整理</h4>
+                <div class="settings-item">
+                    <span class="settings-label">AI 提供商</span>
+                    <select id="ai-provider" style="width: 120px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);">
+                        <option value="claude" ${settings.aiProvider === 'claude' ? 'selected' : ''}>Claude</option>
+                        <option value="openai" ${settings.aiProvider === 'openai' ? 'selected' : ''}>OpenAI</option>
+                    </select>
+                </div>
+                <div class="settings-item" style="margin-top: 8px;">
+                    <span class="settings-label">API Key</span>
+                </div>
+                <input type="password" id="ai-api-key" placeholder="输入 API Key"
+                       style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border); margin-top: 4px;"
+                       value="${settings.aiApiKey || ''}">
+                <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;">
+                    不填则使用关键词匹配。Key 仅存储在本地 Gist 中。
+                </p>
+            </div>
+
+            <div class="settings-section">
+                <h4 class="settings-title">统计</h4>
+                ${this.renderUsageStats()}
+            </div>
+        `;
+    },
+
+    renderUsageStats() {
+        const stats = Store.getCategoryStats();
+        const topUsed = Store.getTopUsedPrompts(5);
+
+        return `
+            <div style="background: var(--bg); border-radius: 8px; padding: 12px;">
+                <p style="font-size: 0.75rem; color: var(--text-light); margin-bottom: 8px;">最常用的提示词</p>
+                <ul class="usage-list">
+                    ${topUsed.map(p => `
+                        <li class="usage-list-item">
+                            <span>${p.title}</span>
+                            <span style="color: var(--primary);">${p.usageCount || 0}次</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+    },
+
+    updateThemeUI() {
+        document.querySelectorAll('.theme-option').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.querySelector(`.theme-option[onclick*="${Store.state.settings.theme}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+    },
+
     // Update stats
     updateStats(total, monthly) {
-        document.getElementById('total-count').textContent = total;
-        document.getElementById('month-count').textContent = monthly;
+        const totalEl = document.getElementById('total-count');
+        const monthEl = document.getElementById('month-count');
+        if (totalEl) totalEl.textContent = total;
+        if (monthEl) monthEl.textContent = monthly;
     },
 
     // Get category icon
     getCategoryIcon(categoryName) {
         const icons = {
-            '写作': '📝',
-            '代码': '🔧',
-            '对话': '💬',
-            '分析': '📊',
-            '翻译': '🌐',
-            '设计': '🎨'
+            '写作': '📝', '代码': '🔧', '对话': '💬', '分析': '📊',
+            '翻译': '🌐', '设计': '🎨', '营销': '📢', '教育': '📚'
         };
         return icons[categoryName] || '📁';
     },
@@ -134,52 +258,39 @@ const Components = {
     // Format time
     formatTime(dateString) {
         if (!dateString) return '';
-
         const date = new Date(dateString);
         const now = new Date();
         const diff = now - date;
-
         const minutes = Math.floor(diff / 60000);
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
-
         if (minutes < 1) return '刚刚';
         if (minutes < 60) return `${minutes}分钟前`;
         if (hours < 24) return `${hours}小时前`;
         if (days < 7) return `${days}天前`;
-        if (days < 30) return `${Math.floor(days / 7)}周前`;
-
         return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
     },
 
     // Show toast notification
     showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
+        if (!container) return;
+
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-
-        const icons = {
-            'success': '✓',
-            'error': '✗',
-            'ai': '⚡',
-            'info': 'ℹ'
-        };
-
+        const icons = { success: '✓', error: '✗', ai: '⚡', info: 'ℹ' };
         toast.innerHTML = `
             <span class="toast-icon">${icons[type] || icons.info}</span>
             <span class="toast-message">${message}</span>
         `;
-
         container.appendChild(toast);
 
         setTimeout(() => {
             toast.style.opacity = '0';
-            toast.style.transform = 'translateY(10px)';
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     },
 
-    // Escape HTML
     escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -187,16 +298,12 @@ const Components = {
         return div.innerHTML;
     },
 
-    // Populate category select in editor
     populateCategorySelect() {
-        const selects = [
-            document.getElementById('prompt-category-select'),
-            document.getElementById('import-category-select')
-        ];
-
+        const selects = ['prompt-category-select', 'import-category-select', 'move-to-category'];
         const categories = Store.state.categories;
 
-        selects.forEach(select => {
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
             if (!select) return;
             const currentValue = select.value;
             select.innerHTML = '<option value="">不指定分类</option>' +
@@ -205,10 +312,10 @@ const Components = {
         });
     },
 
-    // Render import preview
     renderImportPreview(items) {
         const preview = document.getElementById('import-preview');
         const confirmBtn = document.getElementById('import-confirm');
+        if (!preview || !confirmBtn) return;
 
         if (!items || items.length === 0) {
             preview.classList.add('hidden');
@@ -228,6 +335,12 @@ const Components = {
                 </div>
             </div>
         `).join('');
+    },
+
+    renderAddCategoryForm() {
+        const modal = document.getElementById('add-category-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
     }
 };
 

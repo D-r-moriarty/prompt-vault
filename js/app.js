@@ -1,7 +1,8 @@
-// Main App - Craft Workshop Theme
+// Main App - Updated with All Features
 const App = {
-    currentView: 'grid', // grid or editor
+    currentView: 'grid',
     importData: null,
+    selectedIcon: '📁',
 
     async init() {
         const token = API.getToken();
@@ -87,57 +88,47 @@ const App = {
     },
 
     bindEvents() {
-        // Helper to safely add event listener
         const safeOn = (id, event, handler) => {
             const el = document.getElementById(id);
             if (el) el.addEventListener(event, handler);
         };
 
-        // New prompt button
+        safeOn('settings-btn', 'click', () => this.openSettings());
+        safeOn('add-category-btn', 'click', () => this.openModal('add-category-modal'));
         safeOn('new-prompt-btn', 'click', () => this.createNewPrompt());
         safeOn('empty-create-btn', 'click', () => this.createNewPrompt());
 
-        // Search
         safeOn('search', 'input', (e) => {
             const results = Store.searchPrompts(e.target.value);
             Components.renderPromptGrid(results, Store.state.activePromptId);
         });
 
-        // Import button
         safeOn('import-btn', 'click', () => this.openModal('import-modal'));
-
-        // Export button
         safeOn('export-btn', 'click', () => this.openModal('export-modal'));
 
-        // AI button
         safeOn('ai-btn', 'click', () => {
             const panel = document.getElementById('ai-panel');
             if (panel) panel.classList.add('open');
         });
 
-        // AI panel close
         safeOn('ai-close', 'click', () => {
             const panel = document.getElementById('ai-panel');
             if (panel) panel.classList.remove('open');
         });
 
-        // AI actions
         safeOn('ai-organize', 'click', () => this.runAIOrganize());
         safeOn('ai-detect-duplicates', 'click', () => this.runAIDuplicates());
         safeOn('ai-optimize-names', 'click', () => this.runAIOptimize());
 
-        // Editor modal
         safeOn('editor-close', 'click', () => this.closeModal('editor-modal'));
         safeOn('editor-cancel', 'click', () => this.closeModal('editor-modal'));
         safeOn('editor-save', 'click', () => this.savePrompt());
         safeOn('editor-delete', 'click', () => this.deleteCurrentPrompt());
 
-        // Import modal
         safeOn('import-close', 'click', () => this.closeModal('import-modal'));
         safeOn('import-cancel', 'click', () => this.closeModal('import-modal'));
         safeOn('import-confirm', 'click', () => this.importPrompts());
 
-        // Drop zone
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         if (dropZone && fileInput) {
@@ -159,12 +150,19 @@ const App = {
             });
         }
 
-        // Export modal
         safeOn('export-close', 'click', () => this.closeModal('export-modal'));
         safeOn('export-cancel', 'click', () => this.closeModal('export-modal'));
         safeOn('export-confirm', 'click', () => this.exportPrompts());
 
-        // Keyboard shortcuts
+        // Emoji selection for new category
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.emoji-btn').forEach(b => b.style.border = 'none');
+                btn.style.border = '2px solid var(--primary)';
+                this.selectedIcon = btn.dataset.icon;
+            });
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.metaKey || e.ctrlKey) {
                 if (e.key === 'n') {
@@ -189,11 +187,18 @@ const App = {
                     const panel = document.getElementById('ai-panel');
                     if (panel) panel.classList.toggle('open');
                 }
+                if (e.key === 'a') {
+                    e.preventDefault();
+                    Components.selectAll(Store.state.prompts);
+                }
             }
             if (e.key === 'Escape') {
                 this.closeModal('editor-modal');
                 this.closeModal('import-modal');
                 this.closeModal('export-modal');
+                this.closeModal('add-category-modal');
+                this.closeModal('settings-modal');
+                this.closeModal('move-modal');
                 const aiPanel = document.getElementById('ai-panel');
                 if (aiPanel) aiPanel.classList.remove('open');
             }
@@ -228,7 +233,8 @@ const App = {
         document.getElementById('prompt-tags-input').value = (prompt.tags || []).join(', ');
         document.getElementById('created-at').textContent = `创建于: ${new Date(prompt.createdAt).toLocaleDateString('zh-CN')}`;
         document.getElementById('usage-count').textContent = prompt.usageCount ? `使用 ${prompt.usageCount} 次` : '';
-        document.getElementById('editor-delete').style.display = isNew ? 'none' : 'block';
+        const deleteBtn = document.getElementById('editor-delete');
+        if (deleteBtn) deleteBtn.style.display = isNew ? 'none' : 'block';
 
         this.openModal('editor-modal');
     },
@@ -265,6 +271,104 @@ const App = {
         }
     },
 
+    addCategory() {
+        const nameInput = document.getElementById('new-category-name');
+        const name = nameInput.value.trim();
+
+        if (!name) {
+            Components.showToast('请输入分类名称', 'error');
+            return;
+        }
+
+        Store.addCategory(name, this.selectedIcon);
+        this.syncToGist();
+        this.closeModal('add-category-modal');
+        nameInput.value = '';
+        this.selectedIcon = '📁';
+        Components.showToast('分类已创建', 'success');
+    },
+
+    openSettings() {
+        Components.renderSettings();
+        this.openModal('settings-modal');
+    },
+
+    saveSettings() {
+        const provider = document.getElementById('ai-provider')?.value;
+        const apiKey = document.getElementById('ai-api-key')?.value;
+
+        Store.state.settings.aiProvider = provider || 'claude';
+        Store.state.settings.aiApiKey = apiKey || '';
+
+        this.syncToGist();
+        this.closeModal('settings-modal');
+        Components.showToast('设置已保存', 'success');
+    },
+
+    async runAIOrganize() {
+        Components.showToast('正在分析提示词...', 'ai');
+        const settings = Store.state.settings;
+        await AI.analyzePrompts(Store.state.prompts, settings.aiApiKey, settings.aiProvider);
+        AI.renderSuggestions(document.getElementById('suggestions-list'));
+        Components.showToast(`发现 ${AI.suggestions.length} 条建议`, 'ai');
+    },
+
+    async runAIDuplicates() {
+        Components.showToast('正在检测重复...', 'ai');
+        AI.suggestions = [];
+        const groups = AI.findSimilarTitles(Store.state.prompts);
+        groups.forEach(g => {
+            AI.suggestions.push({
+                type: 'similar',
+                prompts: g
+            });
+        });
+        AI.renderSuggestions(document.getElementById('suggestions-list'));
+        Components.showToast(groups.length > 0 ? `发现 ${groups.length} 组可能重复` : '没有发现重复的提示词', groups.length > 0 ? 'ai' : 'success');
+    },
+
+    async runAIOptimize() {
+        Components.showToast('正在优化命名...', 'ai');
+        AI.suggestions = [];
+        Store.state.prompts.forEach(prompt => {
+            const suggested = AI.suggestBetterTitle(prompt);
+            if (suggested) {
+                AI.suggestions.push({
+                    type: 'title-hint',
+                    prompt,
+                    suggestedTitle: suggested
+                });
+            }
+        });
+        AI.renderSuggestions(document.getElementById('suggestions-list'));
+        Components.showToast(AI.suggestions.length > 0 ? `发现 ${AI.suggestions.length} 条可优化标题` : '没有发现可优化的标题', 'ai');
+    },
+
+    batchMoveToCategory() {
+        Components.populateCategorySelect();
+        this.openModal('move-modal');
+    },
+
+    confirmMove() {
+        const category = document.getElementById('move-to-category')?.value;
+        const ids = Array.from(Components.selectedPrompts);
+        Store.movePromptsToCategory(ids, category);
+        this.syncToGist();
+        Components.clearSelection();
+        this.closeModal('move-modal');
+        Components.showToast(`已将 ${ids.length} 条移动到分类`, 'success');
+    },
+
+    batchDelete() {
+        const ids = Array.from(Components.selectedPrompts);
+        if (confirm(`确定要删除选中的 ${ids.length} 条提示词吗？`)) {
+            Store.deletePrompts(ids);
+            this.syncToGist();
+            Components.clearSelection();
+            Components.showToast(`已删除 ${ids.length} 条`, 'success');
+        }
+    },
+
     async syncToGist() {
         const { token, gistId, filename } = Store.state;
         if (!token || !gistId) return;
@@ -281,21 +385,26 @@ const App = {
     },
 
     updateSyncStatus(text, syncing) {
-        document.getElementById('sync-text').textContent = text;
-        const dot = document.getElementById('sync-dot');
-        if (syncing) {
-            dot.classList.add('syncing');
-        } else {
-            dot.classList.remove('syncing');
+        const syncText = document.getElementById('sync-text');
+        const syncDot = document.getElementById('sync-dot');
+        if (syncText) syncText.textContent = text;
+        if (syncDot) {
+            if (syncing) {
+                syncDot.classList.add('syncing');
+            } else {
+                syncDot.classList.remove('syncing');
+            }
         }
     },
 
     openModal(id) {
-        document.getElementById(id).classList.remove('hidden');
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.remove('hidden');
     },
 
     closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add('hidden');
     },
 
     handleFile(file) {
@@ -315,7 +424,6 @@ const App = {
                     return;
                 }
             } else if (file.name.endsWith('.md')) {
-                // Parse Markdown
                 const sections = content.split(/^---$/m);
                 prompts = sections.filter(s => s.trim()).map(s => {
                     const lines = s.trim().split('\n');
@@ -325,7 +433,6 @@ const App = {
                     };
                 });
             } else if (file.name.endsWith('.csv')) {
-                // Parse CSV
                 const lines = content.split('\n');
                 prompts = lines.slice(1).map(line => {
                     const [title, content, category] = line.split(',');
@@ -345,13 +452,12 @@ const App = {
             return;
         }
 
-        const category = document.getElementById('import-category-select').value;
+        const category = document.getElementById('import-category-select')?.value;
         const checkboxes = document.querySelectorAll('#import-preview .import-checkbox:checked');
         const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-
         const selectedPrompts = selectedIndices.map(i => this.importData[i]);
-        Store.importPrompts(selectedPrompts, category);
 
+        Store.addPrompts(selectedPrompts);
         this.syncToGist();
         this.closeModal('import-modal');
         this.importData = null;
@@ -359,8 +465,8 @@ const App = {
     },
 
     exportPrompts() {
-        const scope = document.getElementById('export-scope').value;
-        const format = document.getElementById('export-format').value;
+        const scope = document.getElementById('export-scope')?.value;
+        const format = document.getElementById('export-format')?.value;
 
         let prompts = Store.state.prompts;
         if (scope === 'current' && Store.state.activeCategoryId) {
@@ -380,7 +486,7 @@ const App = {
         } else {
             const header = '标题,内容,分类,标签,创建时间\n';
             const rows = prompts.map(p =>
-                `"${p.title}","${p.content.replace(/"/g, '""')}","${p.category || ''}","${(p.tags || []).join(',')}","${p.createdAt}"`
+                `"${p.title}","${(p.content || '').replace(/"/g, '""')}","${p.category || ''}","${(p.tags || []).join(',')}","${p.createdAt}"`
             ).join('\n');
             content = header + rows;
             filename = 'prompts.csv';
@@ -397,44 +503,6 @@ const App = {
 
         this.closeModal('export-modal');
         Components.showToast('导出成功', 'success');
-    },
-
-    async runAIOrganize() {
-        Components.showToast('正在分析提示词...', 'ai');
-        const suggestions = await AI.analyzePrompts(Store.state.prompts);
-        AI.renderSuggestions(document.getElementById('suggestions-list'));
-        Components.showToast(`发现 ${suggestions.length} 条建议`, 'ai');
-    },
-
-    async runAIDuplicates() {
-        Components.showToast('正在检测重复...', 'ai');
-        const groups = AI.findSimilarTitles(Store.state.prompts);
-        if (groups.length > 0) {
-            AI.suggestions = groups.map(g => ({
-                type: 'similar',
-                prompts: g
-            }));
-            AI.renderSuggestions(document.getElementById('suggestions-list'));
-            Components.showToast(`发现 ${groups.length} 组可能重复`, 'ai');
-        } else {
-            Components.showToast('没有发现重复的提示词', 'success');
-        }
-    },
-
-    async runAIOptimize() {
-        Components.showToast('正在优化命名...', 'ai');
-        Store.state.prompts.forEach(prompt => {
-            const suggested = AI.suggestBetterTitle(prompt);
-            if (suggested) {
-                AI.suggestions.push({
-                    type: 'title-hint',
-                    prompt,
-                    suggestedTitle: suggested
-                });
-            }
-        });
-        AI.renderSuggestions(document.getElementById('suggestions-list'));
-        Components.showToast('命名优化建议已生成', 'ai');
     }
 };
 
