@@ -3,64 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>提示词保管箱</title>
+    <title>提示词工坊 | Prompt Vault</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="app">
-        <!-- 登录视图 -->
-        <div id="login-view" class="view">
-            <div class="login-container">
-                <h1>提示词保管箱</h1>
-                <p>需要 GitHub Personal Access Token 来同步数据</p>
-                <button id="create-token" class="btn-secondary">创建 Token</button>
-                <div class="token-input-container">
-                    <input type="text" id="token-input" placeholder="粘贴你的 Token">
-                    <button id="submit-token" class="btn-primary">确认</button>
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="logo-icon">🔧</span>
+                    <span>提示词工坊</span>
                 </div>
             </div>
-        </div>
 
-        <!-- 主视图 -->
-        <div id="main-view" class="view hidden">
-            <!-- 侧边栏 -->
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <h2>提示词</h2>
-                    <button id="new-prompt" class="btn-icon">+</button>
+            <div class="header-center">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="search" id="search" class="search-input" placeholder="搜索提示词... (⌘F)">
                 </div>
-                <input type="search" id="search" placeholder="搜索提示词...">
-                <div id="category-list" class="category-list"></div>
-                <div id="prompt-list" class="prompt-list"></div>
+            </div>
+
+            <div class="header-right">
+                <button class="btn btn-secondary" id="import-btn" title="导入 (⌘I)">
+                    <span>📥</span> 导入
+                </button>
+                <button class="btn btn-secondary" id="export-btn" title="导出 (⌘E)">
+                    <span>📤</span> 导出
+                </button>
+                <button class="btn btn-ai" id="ai-btn" title="AI 整理 (⌘K)">
+                    <span>⚡</span> AI 助手
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">分类</h3>
+                    <ul class="category-tree" id="category-tree">
+                        <!-- Categories will be rendered here -->
+                    </ul>
+                    <button class="btn btn-ghost" id="add-category-btn" style="width: 100%; margin-top: 0.5rem;">
+                        <span>+</span> 新建分类
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-count">0</div>
+                            <div class="stat-label">总提示词</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="month-count">0</div>
+                            <div class="stat-label">本月新增</div>
+                        </div>
+                    </div>
+                </div>
             </aside>
 
-            <!-- 内容区 -->
-            <main class="content">
-                <div id="empty-state" class="empty-state">
-                    <p>选择一个提示词或创建新的</p>
+            <!-- Content Area -->
+            <main class="content-area">
+                <div id="prompt-grid" class="prompt-grid">
+                    <!-- Prompt cards will be rendered here -->
                 </div>
-                <div id="prompt-editor" class="prompt-editor hidden">
-                    <input type="text" id="prompt-title" placeholder="标题">
-                    <div class="editor-toolbar">
-                        <select id="prompt-category">
-                            <option value="">选择分类</option>
-                        </select>
-                        <input type="text" id="prompt-tags" placeholder="标签（逗号分隔）">
-                    </div>
-                    <textarea id="prompt-content" placeholder="提示词内容..."></textarea>
-                    <div class="editor-actions">
-                        <button id="copy-prompt" class="btn-secondary">复制</button>
-                        <button id="delete-prompt" class="btn-danger">删除</button>
-                        <button id="save-prompt" class="btn-primary">保存</button>
-                    </div>
+
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <h3 class="empty-state-title">还没有提示词</h3>
+                    <p class="empty-state-text">点击下方按钮创建第一个提示词</p>
+                    <button class="btn btn-primary" id="empty-create-btn">
+                        <span>+</span> 创建提示词
+                    </button>
                 </div>
             </main>
         </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <button class="btn btn-primary btn-icon-lg" id="new-prompt-btn" title="新建提示词 (⌘N)">
+                +
+            </button>
+            <div class="sync-status">
+                <span class="sync-dot" id="sync-dot"></span>
+                <span id="sync-text">已同步</span>
+            </div>
+        </footer>
     </div>
 
+    <!-- Editor Modal -->
+    <div id="editor-modal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="editor-title">新建提示词</h2>
+                <button class="modal-close" id="editor-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="prompt-title-input" class="editor-title-input" placeholder="提示词标题...">
+
+                <textarea id="prompt-content-input" class="editor-content" placeholder="输入你的提示词内容..." rows="10"></textarea>
+
+                <div class="editor-meta">
+                    <div class="editor-field">
+                        <label class="editor-label">分类</label>
+                        <select id="prompt-category-select" class="editor-select">
+                            <option value="">选择分类</option>
+                        </select>
+                    </div>
+                    <div class="editor-field">
+                        <label class="editor-label">标签（逗号分隔）</label>
+                        <input type="text" id="prompt-tags-input" class="editor-input" placeholder="标签1, 标签2">
+                    </div>
+                </div>
+
+                <div id="prompt-meta-info" class="editor-meta" style="font-size: 0.75rem; color: var(--ink-light);">
+                    <span id="created-at"></span>
+                    <span id="usage-count"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="editor-delete" style="display: none;">删除</button>
+                <button class="btn btn-secondary" id="editor-cancel">取消</button>
+                <button class="btn btn-primary" id="editor-save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">导入提示词</h2>
+                <button class="modal-close" id="import-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="drop-zone" id="drop-zone">
+                    <div class="drop-zone-icon">📄</div>
+                    <div class="drop-zone-text">拖拽文件到此处或点击选择</div>
+                    <div class="drop-zone-hint">支持 JSON、Markdown、CSV 格式</div>
+                    <input type="file" id="file-input" accept=".json,.md,.csv" style="display: none;">
+                </div>
+
+                <div id="import-preview" class="import-preview hidden">
+                    <!-- Preview items will be rendered here -->
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label class="editor-label">导入到分类</label>
+                    <select id="import-category-select" class="editor-select">
+                        <option value="">不指定分类</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="import-cancel">取消</button>
+                <button class="btn btn-primary" id="import-confirm" disabled>开始导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">导出提示词</h2>
+                <button class="modal-close" id="export-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="editor-field" style="margin-bottom: 1rem;">
+                    <label class="editor-label">导出范围</label>
+                    <select id="export-scope" class="editor-select">
+                        <option value="all">全部提示词</option>
+                        <option value="current">当前分类</option>
+                    </select>
+                </div>
+
+                <div class="editor-field">
+                    <label class="editor-label">导出格式</label>
+                    <select id="export-format" class="editor-select">
+                        <option value="json">JSON（完整数据）</option>
+                        <option value="markdown">Markdown（便于阅读）</option>
+                        <option value="csv">CSV（表格）</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="export-cancel">取消</button>
+                <button class="btn btn-primary" id="export-confirm">导出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Panel -->
+    <div id="ai-panel" class="ai-panel">
+        <div class="ai-panel-header">
+            <div class="ai-panel-title">
+                <span>⚡</span>
+                <span>AI 助手</span>
+            </div>
+            <button class="btn btn-ghost" id="ai-close" style="color: white;">&times;</button>
+        </div>
+        <div class="ai-panel-body">
+            <button class="ai-action-btn" id="ai-organize">
+                <span>🧹</span> 整理提示词
+            </button>
+            <button class="ai-action-btn" id="ai-detect-duplicates">
+                <span>🔍</span> 检测重复
+            </button>
+            <button class="ai-action-btn" id="ai-optimize-names">
+                <span>✏️</span> 优化命名
+            </button>
+
+            <div id="ai-suggestions" style="margin-top: 1rem;">
+                <h4 style="font-size: 0.875rem; color: var(--ink-muted); margin-bottom: 0.5rem;">整理建议</h4>
+                <div id="suggestions-list">
+                    <p style="font-size: 0.875rem; color: var(--ink-light);">点击上方按钮开始 AI 整理</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/store.js"></script>
     <script src="js/components.js"></script>
+    <script src="js/ai.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

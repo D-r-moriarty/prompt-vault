@@ -1,227 +1,256 @@
-:root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --danger: #dc2626;
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --border: #e2e8f0;
-    --text: #1e293b;
-    --text-secondary: #64748b;
-}
+/* Main Stylesheet - Craft Workshop Theme */
+/* Import all style modules */
+@import url('variables.css');
+@import url('base.css');
+@import url('layout.css');
+@import url('components.css');
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* Additional custom styles below */
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-}
-
-.hidden { display: none !important; }
-
-/* 登录视图 */
-.login-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+/* Login Page */
+.login-page {
     min-height: 100vh;
-    gap: 1rem;
-}
-
-.login-container h1 { font-size: 2rem; }
-.login-container p { color: var(--text-secondary); }
-
-/* Token 输入 */
-.token-input-container {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-#token-input {
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    width: 300px;
-    font-family: monospace;
-}
-
-/* 主视图布局 */
-#main-view {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    height: 100vh;
-}
-
-/* 侧边栏 */
-.sidebar {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.btn-icon {
-    width: 2rem;
-    height: 2rem;
-    border: none;
-    background: var(--primary);
-    color: white;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 1.25rem;
-}
-
-/* 搜索框 */
-input[type="search"] {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-}
-
-/* 提示词列表 */
-.prompt-list {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.prompt-item {
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    margin-bottom: 0.5rem;
-}
-
-.prompt-item:hover { background: var(--bg); }
-.prompt-item.active { background: var(--primary); color: white; }
-.prompt-item h3 { font-size: 0.875rem; margin-bottom: 0.25rem; }
-.prompt-item p { font-size: 0.75rem; color: var(--text-secondary); }
-.prompt-item.active p { color: rgba(255,255,255,0.8); }
-
-/* 内容区 */
-.content {
-    padding: 2rem;
-    overflow-y: auto;
-}
-
-.empty-state {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    color: var(--text-secondary);
+    background: var(--paper);
 }
 
-/* 编辑器 */
-.prompt-editor {
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.login-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-8);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
 }
 
-#prompt-title {
+.login-logo {
+    font-size: 3rem;
+    margin-bottom: var(--space-4);
+}
+
+.login-title {
+    font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 600;
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
+    margin-bottom: var(--space-2);
 }
 
-.editor-toolbar {
-    display: flex;
-    gap: 1rem;
+.login-subtitle {
+    color: var(--ink-muted);
+    margin-bottom: var(--space-6);
 }
 
-select, #prompt-tags {
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-}
-
-#prompt-content {
-    flex: 1;
-    min-height: 300px;
-    padding: 1rem;
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    font-family: monospace;
-    resize: vertical;
-}
-
-.editor-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-}
-
-/* 按钮样式 */
-button {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
+.login-instructions {
+    background: var(--paper);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+    text-align: left;
     font-size: 0.875rem;
-    transition: background 0.2s;
 }
 
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-secondary { background: var(--bg); color: var(--text); }
-.btn-secondary:hover { background: var(--border); }
-.btn-danger { background: var(--danger); color: white; }
+.login-instructions ol {
+    margin-left: var(--space-4);
+}
 
-/* Toast 通知 */
-.toast {
+.login-instructions li {
+    margin-bottom: var(--space-2);
+    color: var(--ink-muted);
+}
+
+/* Token input */
+.token-input-group {
+    margin-bottom: var(--space-4);
+}
+
+.token-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid rgba(168, 162, 158, 0.3);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+}
+
+.token-input:focus {
+    outline: none;
+    border-color: var(--amber-400);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+/* AI Processing indicator */
+.ai-thinking {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: linear-gradient(90deg, var(--amber-50), var(--paper));
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+}
+
+.ai-thinking-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.ai-thinking-dots span {
+    width: 6px;
+    height: 6px;
+    background: var(--amber-500);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out;
+}
+
+.ai-thinking-dots span:nth-child(1) { animation-delay: 0s; }
+.ai-thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.ai-thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* Import preview */
+.import-preview {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid rgba(168, 162, 158, 0.2);
+    border-radius: var(--radius-md);
+    margin: var(--space-4) 0;
+}
+
+.import-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-bottom: 1px solid rgba(168, 162, 158, 0.1);
+}
+
+.import-item:last-child {
+    border-bottom: none;
+}
+
+.import-checkbox {
+    margin-top: var(--space-1);
+}
+
+.import-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.import-title {
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: var(--space-1);
+}
+
+.import-meta {
+    font-size: 0.75rem;
+    color: var(--ink-light);
+}
+
+/* Staggered animation for cards */
+.prompt-card:nth-child(1) { animation-delay: 0ms; }
+.prompt-card:nth-child(2) { animation-delay: 50ms; }
+.prompt-card:nth-child(3) { animation-delay: 100ms; }
+.prompt-card:nth-child(4) { animation-delay: 150ms; }
+.prompt-card:nth-child(5) { animation-delay: 200ms; }
+.prompt-card:nth-child(6) { animation-delay: 250ms; }
+.prompt-card:nth-child(7) { animation-delay: 300ms; }
+.prompt-card:nth-child(8) { animation-delay: 350ms; }
+
+/* Category management */
+.category-management {
+    padding: var(--space-4);
+}
+
+.category-form {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.category-form input {
+    flex: 1;
+    padding: var(--space-2);
+    border: 1px solid rgba(168, 162, 158, 0.3);
+    border-radius: var(--radius-md);
+}
+
+.category-list {
+    list-style: none;
+}
+
+.category-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.category-list-item:hover {
+    background: var(--paper);
+}
+
+.category-list-item span {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.category-delete {
+    background: transparent;
+    border: none;
+    color: var(--ink-light);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.category-list-item:hover .category-delete {
+    opacity: 1;
+}
+
+.category-delete:hover {
+    color: var(--terracotta);
+}
+
+/* Usage stats */
+.usage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.75rem;
+    color: var(--ink-light);
+}
+
+.usage-icon {
+    font-size: 0.875rem;
+}
+
+/* Keyboard shortcuts hint */
+.shortcuts-hint {
     position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 1rem 2rem;
-    background: var(--text);
+    bottom: 60px;
+    right: var(--space-6);
+    background: var(--ink);
     color: white;
-    border-radius: 0.5rem;
-    animation: slideUp 0.3s ease;
-    z-index: 1000;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    opacity: 0.8;
 }
 
-.toast-success { background: #16a34a; }
-.toast-error { background: var(--danger); }
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateX(-50%) translateY(1rem); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-/* 分类样式 */
-.categories { margin-bottom: 1rem; }
-.category-label { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
-.category-item { padding: 0.5rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; }
-.category-item:hover { background: var(--bg); }
-.category-item.active { background: var(--primary); color: white; }
-
-.empty { color: var(--text-secondary); text-align: center; padding: 2rem; }
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-    #main-view { grid-template-columns: 1fr; }
-    .sidebar { position: fixed; width: 100%; height: 100%; z-index: 100; transform: translateX(-100%); transition: transform 0.3s; }
-    .sidebar.open { transform: translateX(0); }
+.shortcuts-hint kbd {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    margin: 0 0.125rem;
 }

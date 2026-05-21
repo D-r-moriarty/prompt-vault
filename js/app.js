@@ -1,4 +1,8 @@
+// Main App - Craft Workshop Theme
 const App = {
+    currentView: 'grid', // grid or editor
+    importData: null,
+
     async init() {
         const token = API.getToken();
 
@@ -13,14 +17,56 @@ const App = {
     },
 
     showLogin() {
-        document.getElementById('login-view').classList.remove('hidden');
-        document.getElementById('main-view').classList.add('hidden');
+        document.getElementById('app').innerHTML = `
+            <div class="login-page">
+                <div class="login-card">
+                    <div class="login-logo">🔧</div>
+                    <h1 class="login-title">提示词工坊</h1>
+                    <p class="login-subtitle">管理和整理你的 AI 提示词</p>
+
+                    <div class="login-instructions">
+                        <ol>
+                            <li>点击下方按钮创建 GitHub Personal Access Token</li>
+                            <li>在 GitHub 勾选 <strong>gist</strong> 权限</li>
+                            <li>复制生成的 Token，粘贴到下方</li>
+                        </ol>
+                    </div>
+
+                    <button class="btn btn-secondary" id="create-token-btn" style="width: 100%; margin-bottom: 1rem;">
+                        📝 创建 Token
+                    </button>
+
+                    <div class="token-input-group">
+                        <input type="text" class="token-input" id="token-input" placeholder="粘贴 Token (ghp_xxx 或 github_pat_xxx)">
+                    </div>
+
+                    <button class="btn btn-primary" id="login-btn" style="width: 100%;">
+                        确认登录
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('create-token-btn').addEventListener('click', () => {
+            API.openTokenPage();
+        });
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const token = document.getElementById('token-input').value.trim();
+            if (!token) {
+                Components.showToast('请输入 Token', 'error');
+                return;
+            }
+            if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+                Components.showToast('Token 格式不正确', 'error');
+                return;
+            }
+            API.saveToken(token);
+            this.loadApp(token);
+        });
     },
 
     async loadApp(token) {
-        document.getElementById('login-view').classList.add('hidden');
-        document.getElementById('main-view').classList.remove('hidden');
-
         Store.setState({ token });
 
         try {
@@ -31,108 +77,397 @@ const App = {
                 const data = await API.createPromptsGist(token, Store.getEmptyData());
                 Store.loadFromGist({ id: data.id, filename: 'prompts.json', content: data.content });
             }
+            this.updateSyncStatus('已同步', false);
         } catch (error) {
             console.error('Failed to load data:', error);
-            Components.showToast('加载数据失败，请检查 Token 是否有效', 'error');
+            Components.showToast('加载数据失败，请检查 Token', 'error');
             API.logout();
         }
     },
 
     bindEvents() {
-        // 创建 Token 按钮
-        document.getElementById('create-token').addEventListener('click', () => {
-            API.openTokenPage();
+        // New prompt button
+        document.getElementById('new-prompt-btn').addEventListener('click', () => {
+            this.createNewPrompt();
         });
 
-        // 提交 Token
-        document.getElementById('submit-token').addEventListener('click', () => {
-            const tokenInput = document.getElementById('token-input');
-            const token = tokenInput.value.trim();
-
-            if (!token) {
-                Components.showToast('请输入 Token', 'error');
-                return;
-            }
-
-            // 验证 Token 格式 (应该以 ghp_ 开头)
-            if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
-                Components.showToast('Token 格式不正确', 'error');
-                return;
-            }
-
-            API.saveToken(token);
-            this.loadApp(token);
+        document.getElementById('empty-create-btn')?.addEventListener('click', () => {
+            this.createNewPrompt();
         });
 
-        // 新建提示词
-        document.getElementById('new-prompt').addEventListener('click', async () => {
-            const prompt = Store.addPrompt({ title: '新提示词' });
-            await this.syncToGist();
-            Store.setState({ activePromptId: prompt.id });
-        });
-
-        // 保存提示词
-        document.getElementById('save-prompt').addEventListener('click', async () => {
-            const active = Store.getActivePrompt();
-            if (!active) return;
-
-            const title = document.getElementById('prompt-title').value;
-            const category = document.getElementById('prompt-category').value;
-            const tags = document.getElementById('prompt-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-            const content = document.getElementById('prompt-content').value;
-
-            Store.updatePrompt(active.id, { title, category, tags, content });
-            await this.syncToGist();
-            Components.showToast('保存成功', 'success');
-        });
-
-        // 复制提示词
-        document.getElementById('copy-prompt').addEventListener('click', async () => {
-            const content = document.getElementById('prompt-content').value;
-            await navigator.clipboard.writeText(content);
-            Components.showToast('已复制到剪贴板', 'success');
-        });
-
-        // 删除提示词
-        document.getElementById('delete-prompt').addEventListener('click', async () => {
-            const active = Store.getActivePrompt();
-            if (!active) return;
-
-            if (confirm('确定要删除这个提示词吗？')) {
-                Store.deletePrompt(active.id);
-                await this.syncToGist();
-                Components.showToast('已删除', 'success');
-            }
-        });
-
-        // 搜索
+        // Search
         document.getElementById('search').addEventListener('input', (e) => {
             const results = Store.searchPrompts(e.target.value);
-            Components.renderPromptList(results, Store.state.activePromptId);
+            Components.renderPromptGrid(results, Store.state.activePromptId);
+        });
+
+        // Import button
+        document.getElementById('import-btn').addEventListener('click', () => {
+            this.openModal('import-modal');
+        });
+
+        // Export button
+        document.getElementById('export-btn').addEventListener('click', () => {
+            this.openModal('export-modal');
+        });
+
+        // AI button
+        document.getElementById('ai-btn').addEventListener('click', () => {
+            document.getElementById('ai-panel').classList.add('open');
+        });
+
+        // AI panel close
+        document.getElementById('ai-close').addEventListener('click', () => {
+            document.getElementById('ai-panel').classList.remove('open');
+        });
+
+        // AI actions
+        document.getElementById('ai-organize').addEventListener('click', () => {
+            this.runAIOrganize();
+        });
+
+        document.getElementById('ai-detect-duplicates').addEventListener('click', () => {
+            this.runAIDuplicates();
+        });
+
+        document.getElementById('ai-optimize-names').addEventListener('click', () => {
+            this.runAIOptimize();
+        });
+
+        // Editor modal
+        document.getElementById('editor-close').addEventListener('click', () => {
+            this.closeModal('editor-modal');
+        });
+
+        document.getElementById('editor-cancel').addEventListener('click', () => {
+            this.closeModal('editor-modal');
+        });
+
+        document.getElementById('editor-save').addEventListener('click', () => {
+            this.savePrompt();
+        });
+
+        document.getElementById('editor-delete').addEventListener('click', () => {
+            this.deleteCurrentPrompt();
+        });
+
+        // Import modal
+        document.getElementById('import-close').addEventListener('click', () => {
+            this.closeModal('import-modal');
+        });
+
+        document.getElementById('import-cancel').addEventListener('click', () => {
+            this.closeModal('import-modal');
+        });
+
+        document.getElementById('import-confirm').addEventListener('click', () => {
+            this.importPrompts();
+        });
+
+        // Drop zone
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            this.handleFile(file);
+        });
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            this.handleFile(file);
+        });
+
+        // Export modal
+        document.getElementById('export-close').addEventListener('click', () => {
+            this.closeModal('export-modal');
+        });
+
+        document.getElementById('export-cancel').addEventListener('click', () => {
+            this.closeModal('export-modal');
+        });
+
+        document.getElementById('export-confirm').addEventListener('click', () => {
+            this.exportPrompts();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.metaKey || e.ctrlKey) {
+                if (e.key === 'n') {
+                    e.preventDefault();
+                    this.createNewPrompt();
+                }
+                if (e.key === 'f') {
+                    e.preventDefault();
+                    document.getElementById('search').focus();
+                }
+                if (e.key === 'i') {
+                    e.preventDefault();
+                    this.openModal('import-modal');
+                }
+                if (e.key === 'e') {
+                    e.preventDefault();
+                    this.openModal('export-modal');
+                }
+                if (e.key === 'k') {
+                    e.preventDefault();
+                    document.getElementById('ai-panel').classList.toggle('open');
+                }
+            }
+            if (e.key === 'Escape') {
+                this.closeModal('editor-modal');
+                this.closeModal('import-modal');
+                this.closeModal('export-modal');
+                document.getElementById('ai-panel').classList.remove('open');
+            }
         });
     },
 
     bindStoreListener() {
         Store.subscribe((state) => {
-            Components.renderPromptList(state.prompts, state.activePromptId);
-            Components.renderCategoryList(state.categories);
-            Components.renderEditor(Store.getActivePrompt());
+            Components.renderCategoryTree(state.categories, state.prompts);
+            Components.renderPromptGrid(state.prompts, state.activePromptId);
+            Components.updateStats(state.prompts.length, Store.getMonthlyCount());
+            Components.populateCategorySelect();
         });
+    },
+
+    createNewPrompt() {
+        const prompt = Store.addPrompt({ title: '新提示词' });
+        this.syncToGist();
+        this.openEditor(prompt.id);
+    },
+
+    openEditor(promptId) {
+        const prompt = Store.state.prompts.find(p => p.id === promptId);
+        if (!prompt) return;
+
+        const isNew = !prompt.content && prompt.title === '新提示词';
+
+        document.getElementById('editor-title').textContent = isNew ? '新建提示词' : '编辑提示词';
+        document.getElementById('prompt-title-input').value = prompt.title;
+        document.getElementById('prompt-content-input').value = prompt.content;
+        document.getElementById('prompt-category-select').value = prompt.category || '';
+        document.getElementById('prompt-tags-input').value = (prompt.tags || []).join(', ');
+        document.getElementById('created-at').textContent = `创建于: ${new Date(prompt.createdAt).toLocaleDateString('zh-CN')}`;
+        document.getElementById('usage-count').textContent = prompt.usageCount ? `使用 ${prompt.usageCount} 次` : '';
+        document.getElementById('editor-delete').style.display = isNew ? 'none' : 'block';
+
+        this.openModal('editor-modal');
+    },
+
+    savePrompt() {
+        const title = document.getElementById('prompt-title-input').value.trim();
+        const content = document.getElementById('prompt-content-input').value;
+        const category = document.getElementById('prompt-category-select').value;
+        const tags = document.getElementById('prompt-tags-input').value.split(',').map(t => t.trim()).filter(Boolean);
+
+        if (!title) {
+            Components.showToast('请输入标题', 'error');
+            return;
+        }
+
+        const activeId = Store.state.activePromptId;
+        Store.updatePrompt(activeId, { title, content, category, tags });
+        Store.incrementUsage(activeId);
+
+        this.syncToGist();
+        this.closeModal('editor-modal');
+        Components.showToast('已保存', 'success');
+    },
+
+    deleteCurrentPrompt() {
+        const active = Store.getActivePrompt();
+        if (!active) return;
+
+        if (confirm('确定要删除这个提示词吗？')) {
+            Store.deletePrompt(active.id);
+            this.syncToGist();
+            this.closeModal('editor-modal');
+            Components.showToast('已删除', 'success');
+        }
     },
 
     async syncToGist() {
         const { token, gistId, filename } = Store.state;
         if (!token || !gistId) return;
 
-        Store.setState({ isSyncing: true });
+        this.updateSyncStatus('同步中...', true);
         try {
             await API.updatePromptsGist(token, gistId, filename, Store.exportData());
+            this.updateSyncStatus('已同步', false);
         } catch (error) {
             console.error('Sync failed:', error);
+            this.updateSyncStatus('同步失败', false);
             Components.showToast('同步失败', 'error');
-        } finally {
-            Store.setState({ isSyncing: false });
         }
+    },
+
+    updateSyncStatus(text, syncing) {
+        document.getElementById('sync-text').textContent = text;
+        const dot = document.getElementById('sync-dot');
+        if (syncing) {
+            dot.classList.add('syncing');
+        } else {
+            dot.classList.remove('syncing');
+        }
+    },
+
+    openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+    },
+
+    closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    },
+
+    handleFile(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            let prompts = [];
+
+            if (file.name.endsWith('.json')) {
+                try {
+                    const data = JSON.parse(content);
+                    prompts = Array.isArray(data) ? data : (data.prompts || []);
+                } catch (err) {
+                    Components.showToast('JSON 格式错误', 'error');
+                    return;
+                }
+            } else if (file.name.endsWith('.md')) {
+                // Parse Markdown
+                const sections = content.split(/^---$/m);
+                prompts = sections.filter(s => s.trim()).map(s => {
+                    const lines = s.trim().split('\n');
+                    return {
+                        title: lines[0]?.replace(/^#*\s*/, '') || '未命名',
+                        content: lines.slice(1).join('\n').trim()
+                    };
+                });
+            } else if (file.name.endsWith('.csv')) {
+                // Parse CSV
+                const lines = content.split('\n');
+                prompts = lines.slice(1).map(line => {
+                    const [title, content, category] = line.split(',');
+                    return { title: title?.trim(), content: content?.trim(), category: category?.trim() };
+                }).filter(p => p.title);
+            }
+
+            this.importData = prompts;
+            Components.renderImportPreview(prompts);
+        };
+        reader.readAsText(file);
+    },
+
+    importPrompts() {
+        if (!this.importData || this.importData.length === 0) {
+            Components.showToast('没有要导入的数据', 'error');
+            return;
+        }
+
+        const category = document.getElementById('import-category-select').value;
+        const checkboxes = document.querySelectorAll('#import-preview .import-checkbox:checked');
+        const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+
+        const selectedPrompts = selectedIndices.map(i => this.importData[i]);
+        Store.importPrompts(selectedPrompts, category);
+
+        this.syncToGist();
+        this.closeModal('import-modal');
+        this.importData = null;
+        Components.showToast(`成功导入 ${selectedPrompts.length} 条提示词`, 'success');
+    },
+
+    exportPrompts() {
+        const scope = document.getElementById('export-scope').value;
+        const format = document.getElementById('export-format').value;
+
+        let prompts = Store.state.prompts;
+        if (scope === 'current' && Store.state.activeCategoryId) {
+            prompts = Store.getPromptsByCategory(Store.state.activeCategoryId);
+        }
+
+        let content, filename, mimeType;
+
+        if (format === 'json') {
+            content = JSON.stringify({ version: '2.0', prompts }, null, 2);
+            filename = 'prompts.json';
+            mimeType = 'application/json';
+        } else if (format === 'markdown') {
+            content = prompts.map(p => `# ${p.title}\n\n${p.content}\n\n---\n`).join('\n');
+            filename = 'prompts.md';
+            mimeType = 'text/markdown';
+        } else {
+            const header = '标题,内容,分类,标签,创建时间\n';
+            const rows = prompts.map(p =>
+                `"${p.title}","${p.content.replace(/"/g, '""')}","${p.category || ''}","${(p.tags || []).join(',')}","${p.createdAt}"`
+            ).join('\n');
+            content = header + rows;
+            filename = 'prompts.csv';
+            mimeType = 'text/csv';
+        }
+
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        this.closeModal('export-modal');
+        Components.showToast('导出成功', 'success');
+    },
+
+    async runAIOrganize() {
+        Components.showToast('正在分析提示词...', 'ai');
+        const suggestions = await AI.analyzePrompts(Store.state.prompts);
+        AI.renderSuggestions(document.getElementById('suggestions-list'));
+        Components.showToast(`发现 ${suggestions.length} 条建议`, 'ai');
+    },
+
+    async runAIDuplicates() {
+        Components.showToast('正在检测重复...', 'ai');
+        const groups = AI.findSimilarTitles(Store.state.prompts);
+        if (groups.length > 0) {
+            AI.suggestions = groups.map(g => ({
+                type: 'similar',
+                prompts: g
+            }));
+            AI.renderSuggestions(document.getElementById('suggestions-list'));
+            Components.showToast(`发现 ${groups.length} 组可能重复`, 'ai');
+        } else {
+            Components.showToast('没有发现重复的提示词', 'success');
+        }
+    },
+
+    async runAIOptimize() {
+        Components.showToast('正在优化命名...', 'ai');
+        Store.state.prompts.forEach(prompt => {
+            const suggested = AI.suggestBetterTitle(prompt);
+            if (suggested) {
+                AI.suggestions.push({
+                    type: 'title-hint',
+                    prompt,
+                    suggestedTitle: suggested
+                });
+            }
+        });
+        AI.renderSuggestions(document.getElementById('suggestions-list'));
+        Components.showToast('命名优化建议已生成', 'ai');
     }
 };
 
