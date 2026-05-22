@@ -81,14 +81,17 @@
     padding: var(--space-4);
     box-shadow: var(--shadow);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
     position: relative;
-    animation: slideUp 0.4s ease backwards;
 }
 
 .prompt-card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
+}
+
+.prompt-card:active {
+    transform: translateY(-1px);
 }
 
 .prompt-card::before {
@@ -285,29 +288,33 @@
     margin-top: var(--space-6);
 }
 
-/* Modal */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 900;
     animation: fadeIn 0.2s ease;
     padding: var(--space-4);
-    backdrop-filter: blur(2px);
 }
 
 .modal {
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
-    max-width: 500px;
+    max-width: 800px;
     width: 100%;
-    max-height: 80vh;
+    max-height: 90vh;
     overflow-y: auto;
     animation: slideUp 0.3s ease;
+    position: relative;
+    z-index: 901;
+}
+
+.modal-overlay.hidden {
+    display: none;
 }
 
 .modal-header {

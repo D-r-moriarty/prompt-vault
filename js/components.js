@@ -40,18 +40,18 @@ const Components = {
         }
 
         const cardsHtml = prompts.map((prompt, index) => `
-            <div class="prompt-card ${this.selectedPrompts.has(prompt.id) ? 'selected' : ''}"
-                 data-id="${prompt.id}"
-                 data-index="${index}">
+            <div class="prompt-card" data-id="${prompt.id}" data-index="${index}">
                 <input type="checkbox" class="prompt-checkbox"
                        ${this.selectedPrompts.has(prompt.id) ? 'checked' : ''}
                        onclick="event.stopPropagation(); Components.toggleSelection('${prompt.id}')">
-                <div class="prompt-card-header">
+                <div class="prompt-card-header" onclick="App.openEditor('${prompt.id}')">
                     <span class="prompt-card-icon">${prompt.category ? this.getCategoryIcon(prompt.category) : '📝'}</span>
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
                     ${this.selectMode ? `<button class="btn btn-ghost btn-icon delete-card-btn" data-id="${prompt.id}" style="margin-left: auto; color: var(--danger);">🗑️</button>` : ''}
                 </div>
-                <p class="prompt-card-content">${this.escapeHtml(prompt.content.substring(0, 150))}</p>
+                <div class="prompt-card-body" onmousedown="Components.handleCardClick(event, '${prompt.id}')">
+                    <p class="prompt-card-content">${this.escapeHtml(prompt.content.substring(0, 150))}</p>
+                </div>
                 ${prompt.tags && prompt.tags.length > 0 ? `
                     <div class="prompt-card-tags">
                         ${prompt.tags.slice(0, 3).map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
