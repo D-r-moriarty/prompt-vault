@@ -51,7 +51,7 @@ const Components = {
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
                     ${this.selectMode ? `<button class="btn btn-ghost btn-icon delete-card-btn" data-id="${prompt.id}" style="margin-left: auto; color: var(--danger);">🗑️</button>` : ''}
                 </div>
-                <p class="prompt-card-content">${this.escapeHtml(prompt.content.substring(0, 100))}</p>
+                <p class="prompt-card-content">${this.escapeHtml(prompt.content.substring(0, 150))}</p>
                 ${prompt.tags && prompt.tags.length > 0 ? `
                     <div class="prompt-card-tags">
                         ${prompt.tags.slice(0, 3).map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
@@ -188,7 +188,6 @@ const Components = {
 
         categories.forEach(cat => {
             const count = categoryStats[cat.name]?.count || 0;
-            const isSystem = ['cat-1', 'cat-2', 'cat-3', 'cat-4'].includes(cat.id);
             html += `
                 <li class="category-item">
                     <button class="category-btn ${Store.state.activeCategoryId === cat.name ? 'active' : ''}"
@@ -196,8 +195,8 @@ const Components = {
                             data-category-id="${cat.id}">
                         <span class="category-icon">${cat.icon}</span>
                         <span>${this.escapeHtml(cat.name)}</span>
-                        <span class="category-count">${count}</span>
                     </button>
+                    <span class="category-count">${count}</span>
                     <button class="category-edit-btn" onclick="App.openEditCategory('${cat.id}')" title="编辑分类">✏️</button>
                 </li>
             `;
@@ -229,6 +228,16 @@ const Components = {
                     ? Store.state.prompts
                     : Store.getPromptsByCategory(category);
                 this.renderPromptGrid(filtered, Store.state.activePromptId);
+
+                // Clear selection when switching categories
+                this.clearSelection();
+                this.selectMode = false;
+                const selectBtn = document.getElementById('select-mode-btn');
+                if (selectBtn) {
+                    selectBtn.classList.remove('btn-primary');
+                    selectBtn.classList.add('btn-secondary');
+                    selectBtn.innerHTML = '<span>☐</span> 选择';
+                }
             });
         });
     },

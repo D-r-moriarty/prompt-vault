@@ -211,13 +211,28 @@
     align-items: center;
 }
 
+.category-btn {
+    display: flex;
+    align-items: center;
+    width: calc(100% - 50px);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+}
+
 .category-item:hover .category-edit-btn {
     opacity: 1;
 }
 
 .category-edit-btn {
     position: absolute;
-    right: 8px;
+    right: 45px;
     top: 50%;
     transform: translateY(-50%);
     background: var(--paper);
@@ -234,6 +249,17 @@
 .category-edit-btn:hover {
     opacity: 1;
     background: var(--amber-100);
+}
+
+.category-count {
+    position: absolute;
+    right: 8px;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--ink-light);
+    background: var(--paper);
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
 }
 
 .category-delete {

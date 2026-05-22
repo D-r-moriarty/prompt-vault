@@ -227,7 +227,8 @@
 }
 
 .editor-content {
-    min-height: 200px;
+    min-height: 300px;
+    max-height: 60vh;
     padding: var(--space-4);
     background: var(--bg-dark);
     border: 1px solid var(--border);
@@ -687,6 +688,15 @@
 
 .prompt-card.selected {
     outline: 2px solid var(--primary);
+    background: var(--amber-50) !important;
+}
+
+.prompt-card.selected .prompt-card-title {
+    color: var(--amber-700);
+}
+
+.prompt-card.selected .prompt-card-content {
+    color: var(--ink);
 }
 
 /* No animation in select mode */
