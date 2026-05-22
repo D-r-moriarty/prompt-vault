@@ -229,6 +229,18 @@
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
 }
 
+/* Text selection styling */
+.editor-title-input::selection,
+.editor-content::selection {
+    background: var(--amber-200) !important;
+    color: var(--ink) !important;
+}
+
+.editor-title-input:focus::selection,
+.editor-content:focus::selection {
+    background: var(--amber-300) !important;
+}
+
 .editor-content {
     min-height: 300px;
     max-height: 60vh;
