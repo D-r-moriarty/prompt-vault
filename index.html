@@ -115,24 +115,16 @@
                 <div id="empty-state" class="empty-state">
                     <div class="empty-state-icon">📝</div>
                     <h3 class="empty-state-title">还没有提示词</h3>
-                    <p class="empty-state-text">点击下方按钮创建第一个提示词</p>
-                    <button class="btn btn-primary" id="empty-create-btn">
-                        <span>+</span> 创建提示词
-                    </button>
+                    <p class="empty-state-text">点击右上角的"新建"按钮创建第一个提示词</p>
                 </div>
             </main>
         </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <button class="btn btn-primary btn-icon-lg" id="new-prompt-btn" title="新建提示词 (⌘N)">
-                +
-            </button>
-            <div class="sync-status">
-                <span class="sync-dot" id="sync-dot"></span>
-                <span id="sync-text">已同步</span>
-            </div>
-        </footer>
+        <!-- Sync Status Bar -->
+        <div class="sync-status-bar">
+            <span class="sync-dot" id="sync-dot"></span>
+            <span id="sync-text">已同步</span>
+        </div>
     </div>
 
     <!-- Editor Modal -->
@@ -146,6 +138,7 @@
                 <label class="editor-title-label">标题</label>
                 <input type="text" id="prompt-title-input" class="editor-title-input" placeholder="输入提示词标题..." autofocus>
 
+                <label class="editor-title-label" style="margin-top: 1rem;">正文内容</label>
                 <textarea id="prompt-content-input" class="editor-content" placeholder="输入你的提示词内容..." rows="10"></textarea>
 
                 <div class="editor-meta">
@@ -168,6 +161,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" id="editor-delete" style="display: none;">删除</button>
+                <button class="btn btn-secondary" id="editor-copy">复制</button>
                 <button class="btn btn-secondary" id="editor-cancel">取消</button>
                 <button class="btn btn-primary" id="editor-save">保存</button>
             </div>

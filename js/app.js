@@ -8,14 +8,16 @@ const App = {
     async init() {
         const token = API.getToken();
 
-        this.bindEvents();
-
         if (token) {
+            // Token exists, load data and render
             await this.loadApp(token);
             this.bindStoreListener();
         } else {
+            // No token, show login
             this.showLogin();
         }
+        // Always bind events after potential login
+        this.bindEvents();
     },
 
     showLogin() {
@@ -80,7 +82,6 @@ const App = {
                 Store.loadFromGist({ id: data.id, filename: 'prompts.json', content: data.content });
             }
             this.updateSyncStatus('已同步', false);
-            this.bindStoreListener();
         } catch (error) {
             console.error('Failed to load data:', error);
             Components.showToast('加载数据失败，请检查 Token', 'error');
@@ -98,7 +99,6 @@ const App = {
         safeOn('settings-btn', 'click', () => this.openSettings());
         safeOn('add-category-btn', 'click', () => this.openModal('add-category-modal'));
         safeOn('new-prompt-btn', 'click', () => this.createNewPrompt());
-        safeOn('empty-create-btn', 'click', () => this.createNewPrompt());
 
         safeOn('search', 'input', (e) => {
             const results = Store.searchPrompts(e.target.value);
@@ -126,6 +126,7 @@ const App = {
         safeOn('editor-cancel', 'click', () => this.closeModal('editor-modal'));
         safeOn('editor-save', 'click', () => this.savePrompt());
         safeOn('editor-delete', 'click', () => this.deleteCurrentPrompt());
+        safeOn('editor-copy', 'click', () => this.copyPrompt());
 
         safeOn('import-close', 'click', () => this.closeModal('import-modal'));
         safeOn('import-cancel', 'click', () => this.closeModal('import-modal'));
@@ -165,23 +166,8 @@ const App = {
             });
         });
 
-        // Enable text selection in editor inputs
-        const titleInput = document.getElementById('prompt-title-input');
-        const contentInput = document.getElementById('prompt-content-input');
-        if (titleInput) {
-            titleInput.addEventListener('keydown', (e) => {
-                if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-                    e.stopPropagation();
-                }
-            });
-        }
-        if (contentInput) {
-            contentInput.addEventListener('keydown', (e) => {
-                if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-                    e.stopPropagation();
-                }
-            });
-        }
+        // Enable text selection in editor inputs - no special handling needed
+        // The browser handles Shift+Arrow natively, we just don't interfere
 
         document.addEventListener('keydown', (e) => {
             if (e.metaKey || e.ctrlKey) {
@@ -287,6 +273,20 @@ const App = {
             this.closeModal('editor-modal');
             Components.showToast('已删除', 'success');
         }
+    },
+
+    copyPrompt() {
+        const title = document.getElementById('prompt-title-input').value.trim();
+        const content = document.getElementById('prompt-content-input').value;
+        const fullText = `${title}\n\n${content}`;
+
+        navigator.clipboard.writeText(fullText).then(() => {
+            Store.incrementUsage(Store.state.activePromptId);
+            this.syncToGist();
+            Components.showToast('已复制到剪贴板', 'success');
+        }).catch(err => {
+            Components.showToast('复制失败', 'error');
+        });
     },
 
     addCategory() {
