@@ -68,14 +68,28 @@ const Components = {
 
         grid.innerHTML = headerHtml + cardsHtml;
 
-        // Add click handlers for cards - only open editor
+        // Add click handlers for cards
         grid.querySelectorAll('.prompt-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 const id = card.dataset.id;
                 if (e.target.classList.contains('delete-card-btn')) return;
-                // Always open editor, selection only in select mode
-                Store.setState({ activePromptId: id });
-                App.openEditor(id);
+
+                if (this.selectMode) {
+                    // In select mode, toggle selection
+                    this.toggleSelection(id);
+                } else {
+                    // Not in select mode, open editor
+                    Store.setState({ activePromptId: id });
+                    App.openEditor(id);
+                }
+            });
+        });
+
+        // Add click handlers for delete buttons in select mode
+        grid.querySelectorAll('.delete-card-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deletePrompt(btn.dataset.id);
             });
         });
     },
