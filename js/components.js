@@ -45,9 +45,6 @@ const Components = {
 
         const cardsHtml = prompts.map((prompt, index) => `
             <div class="prompt-card" data-id="${prompt.id}" data-index="${index}">
-                <input type="checkbox" class="prompt-checkbox"
-                       ${this.selectedPrompts.has(prompt.id) ? 'checked' : ''}
-                       onclick="event.stopPropagation(); Components.toggleSelection('${prompt.id}')">
                 <div class="prompt-card-header" onclick="App.openEditor('${prompt.id}')">
                     <span class="prompt-card-icon">${prompt.category ? this.getCategoryIcon(prompt.category) : '📝'}</span>
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
@@ -71,27 +68,14 @@ const Components = {
 
         grid.innerHTML = headerHtml + cardsHtml;
 
-        // Add click handlers for cards
+        // Add click handlers for cards - only open editor
         grid.querySelectorAll('.prompt-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 const id = card.dataset.id;
-                if (e.target.classList.contains('prompt-checkbox')) return;
                 if (e.target.classList.contains('delete-card-btn')) return;
-
-                if (this.selectMode) {
-                    this.toggleSelection(id);
-                } else {
-                    Store.setState({ activePromptId: id });
-                    App.openEditor(id);
-                }
-            });
-        });
-
-        // Add click handlers for delete buttons in select mode
-        grid.querySelectorAll('.delete-card-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.deletePrompt(btn.dataset.id);
+                // Always open editor, selection only in select mode
+                Store.setState({ activePromptId: id });
+                App.openEditor(id);
             });
         });
     },
