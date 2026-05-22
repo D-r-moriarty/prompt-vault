@@ -165,6 +165,7 @@ const Components = {
 
         categories.forEach(cat => {
             const count = categoryStats[cat.name]?.count || 0;
+            const isSystem = ['cat-1', 'cat-2', 'cat-3', 'cat-4'].includes(cat.id);
             html += `
                 <li class="category-item">
                     <button class="category-btn ${Store.state.activeCategoryId === cat.name ? 'active' : ''}"
@@ -174,6 +175,7 @@ const Components = {
                         <span>${this.escapeHtml(cat.name)}</span>
                         <span class="category-count">${count}</span>
                     </button>
+                    <button class="category-edit-btn" onclick="App.openEditCategory('${cat.id}')" title="编辑分类">✏️</button>
                 </li>
             `;
         });

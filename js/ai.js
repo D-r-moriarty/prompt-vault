@@ -30,6 +30,8 @@ const AI = {
 
         const systemPrompt = `你是一个提示词整理助手。请分析用户的提示词集合，提出整理建议。
 
+重要：只分析标题和分类，不修改正文内容！
+
 输出格式（JSON数组）：
 [
   {"type": "category-hint", "promptTitle": "原始标题", "suggestedCategory": "建议分类", "reason": "原因"},

@@ -44,6 +44,15 @@
     color: var(--text);
 }
 
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #DC2626;
+}
+
 .btn-icon {
     width: 36px;
     height: 36px;
@@ -190,16 +199,31 @@
     margin-bottom: var(--space-6);
 }
 
+.editor-title-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-2);
+}
+
 .editor-title-input {
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: 600;
-    border: none;
+    border: 2px solid var(--border);
     outline: none;
     width: 100%;
-    padding: var(--space-2) 0;
-    background: transparent;
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface);
     color: var(--text);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.editor-title-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
 }
 
 .editor-content {
@@ -716,6 +740,30 @@
 .settings-label {
     font-size: 0.875rem;
     color: var(--text-muted);
+}
+
+.emoji-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--bg-dark);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-btn:hover {
+    background: var(--primary-light);
+    transform: scale(1.1);
+}
+
+.emoji-btn.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
 }
 
 /* Toggle Switch */

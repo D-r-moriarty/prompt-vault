@@ -3,6 +3,7 @@ const App = {
     currentView: 'grid',
     importData: null,
     selectedIcon: '📁',
+    editingCategoryId: null,
 
     async init() {
         const token = API.getToken();
@@ -164,6 +165,24 @@ const App = {
             });
         });
 
+        // Enable text selection in editor inputs
+        const titleInput = document.getElementById('prompt-title-input');
+        const contentInput = document.getElementById('prompt-content-input');
+        if (titleInput) {
+            titleInput.addEventListener('keydown', (e) => {
+                if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                    e.stopPropagation();
+                }
+            });
+        }
+        if (contentInput) {
+            contentInput.addEventListener('keydown', (e) => {
+                if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                    e.stopPropagation();
+                }
+            });
+        }
+
         document.addEventListener('keydown', (e) => {
             if (e.metaKey || e.ctrlKey) {
                 if (e.key === 'n') {
@@ -188,10 +207,6 @@ const App = {
                     const panel = document.getElementById('ai-panel');
                     if (panel) panel.classList.toggle('open');
                 }
-                if (e.key === 'a') {
-                    e.preventDefault();
-                    Components.selectAll(Store.state.prompts);
-                }
             }
             if (e.key === 'Escape') {
                 this.closeModal('editor-modal');
@@ -200,6 +215,7 @@ const App = {
                 this.closeModal('add-category-modal');
                 this.closeModal('settings-modal');
                 this.closeModal('move-modal');
+                this.closeModal('edit-category-modal');
                 const aiPanel = document.getElementById('ai-panel');
                 if (aiPanel) aiPanel.classList.remove('open');
             }
@@ -217,8 +233,9 @@ const App = {
 
     createNewPrompt() {
         const prompt = Store.addPrompt({ title: '新提示词' });
-        this.syncToGist();
+        Store.setState({ activePromptId: prompt.id });
         this.openEditor(prompt.id);
+        this.syncToGist();
     },
 
     openEditor(promptId) {
@@ -287,6 +304,66 @@ const App = {
         nameInput.value = '';
         this.selectedIcon = '📁';
         Components.showToast('分类已创建', 'success');
+    },
+
+    openEditCategory(categoryId) {
+        const category = Store.state.categories.find(c => c.id === categoryId);
+        if (!category) return;
+
+        this.editingCategoryId = categoryId;
+        document.getElementById('edit-category-name').value = category.name;
+        this.renderEditCategoryIcons(category.icon);
+        this.openModal('edit-category-modal');
+    },
+
+    renderEditCategoryIcons(selectedIcon) {
+        const icons = ['📝', '💡', '🎨', '📖', '🔧', '💬', '📊', '🌐', '🎯', '📁', '🚀', '⭐', '🔥', '💎', '🎵', '🎮', '📷', '🎬', '💼', '🏆'];
+        const container = document.getElementById('edit-category-icons');
+        if (!container) return;
+
+        container.innerHTML = icons.map(icon => `
+            <button class="emoji-btn ${selectedIcon === icon ? 'selected' : ''}" data-icon="${icon}" onclick="App.selectEditIcon('${icon}')">${icon}</button>
+        `).join('');
+    },
+
+    selectEditIcon(icon) {
+        document.querySelectorAll('#edit-category-icons .emoji-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector(`#edit-category-icons .emoji-btn[data-icon="${icon}"]`).classList.add('selected');
+        this.selectedIcon = icon;
+    },
+
+    saveEditingCategory() {
+        const name = document.getElementById('edit-category-name').value.trim();
+        if (!name) {
+            Components.showToast('请输入分类名称', 'error');
+            return;
+        }
+
+        const updates = { name, icon: this.selectedIcon };
+        Store.updateCategory(this.editingCategoryId, updates);
+        this.syncToGist();
+        this.closeModal('edit-category-modal');
+        Components.showToast('分类已更新', 'success');
+    },
+
+    deleteEditingCategory() {
+        if (!this.editingCategoryId) return;
+
+        const category = Store.state.categories.find(c => c.id === this.editingCategoryId);
+        if (!category) return;
+
+        const systemCats = ['cat-1', 'cat-2', 'cat-3', 'cat-4'];
+        if (systemCats.includes(this.editingCategoryId)) {
+            Components.showToast('不能删除系统分类', 'error');
+            return;
+        }
+
+        if (confirm(`确定要删除分类"${category.name}"吗？该分类下的提示词将移至未分类。`)) {
+            Store.deleteCategory(this.editingCategoryId);
+            this.syncToGist();
+            this.closeModal('edit-category-modal');
+            Components.showToast('分类已删除', 'success');
+        }
     },
 
     openSettings() {
