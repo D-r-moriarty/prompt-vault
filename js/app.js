@@ -8,16 +8,15 @@ const App = {
     async init() {
         const token = API.getToken();
 
+        // Always bind events and store listener first
+        this.bindStoreListener();
+        this.bindEvents();
+
         if (token) {
-            // Token exists, load data and render
             await this.loadApp(token);
-            this.bindStoreListener();
         } else {
-            // No token, show login
             this.showLogin();
         }
-        // Always bind events after potential login
-        this.bindEvents();
     },
 
     showLogin() {
