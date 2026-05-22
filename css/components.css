@@ -563,6 +563,21 @@
     padding: var(--space-8);
 }
 
+.empty-state.hidden {
+    display: none;
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: var(--space-8);
+    color: var(--text-muted);
+}
+
+.loading-state.hidden {
+    display: none;
+}
+
 .empty-state-icon {
     font-size: 4rem;
     margin-bottom: var(--space-4);

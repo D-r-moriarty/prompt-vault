@@ -108,11 +108,15 @@
 
             <!-- Content Area -->
             <main class="content-area">
-                <div id="prompt-grid" class="prompt-grid">
+                <div id="loading-state" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>加载中...</p>
+                </div>
+                <div id="prompt-grid" class="prompt-grid hidden">
                     <!-- Prompt cards will be rendered here -->
                 </div>
 
-                <div id="empty-state" class="empty-state">
+                <div id="empty-state" class="empty-state hidden">
                     <div class="empty-state-icon">📝</div>
                     <h3 class="empty-state-title">还没有提示词</h3>
                     <p class="empty-state-text">点击右上角的"新建"按钮创建第一个提示词</p>

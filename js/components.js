@@ -7,6 +7,10 @@ const Components = {
     renderPromptGrid(prompts, activeId) {
         const grid = document.getElementById('prompt-grid');
         const emptyState = document.getElementById('empty-state');
+        const loadingState = document.getElementById('loading-state');
+
+        // Hide loading state
+        if (loadingState) loadingState.classList.add('hidden');
 
         if (!prompts || prompts.length === 0) {
             grid.innerHTML = '';

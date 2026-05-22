@@ -8,6 +8,10 @@ const App = {
     async init() {
         const token = API.getToken();
 
+        // Show loading state
+        const loadingState = document.getElementById('loading-state');
+        if (loadingState) loadingState.classList.remove('hidden');
+
         // Always bind events and store listener first
         this.bindStoreListener();
         this.bindEvents();
