@@ -207,6 +207,8 @@
 
 .category-item {
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .category-item:hover .category-edit-btn {
@@ -218,17 +220,20 @@
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    background: transparent;
+    background: var(--paper);
     border: none;
     cursor: pointer;
     opacity: 0;
     transition: opacity var(--transition-fast);
     font-size: 0.75rem;
-    padding: 4px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
 }
 
 .category-edit-btn:hover {
     opacity: 1;
+    background: var(--amber-100);
 }
 
 .category-delete {

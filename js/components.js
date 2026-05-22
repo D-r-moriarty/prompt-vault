@@ -42,15 +42,14 @@ const Components = {
         const cardsHtml = prompts.map((prompt, index) => `
             <div class="prompt-card ${this.selectedPrompts.has(prompt.id) ? 'selected' : ''}"
                  data-id="${prompt.id}"
-                 style="animation-delay: ${index * 50}ms"
-                 onclick="Components.handleCardClick(event, '${prompt.id}')">
+                 data-index="${index}">
                 <input type="checkbox" class="prompt-checkbox"
                        ${this.selectedPrompts.has(prompt.id) ? 'checked' : ''}
                        onclick="event.stopPropagation(); Components.toggleSelection('${prompt.id}')">
                 <div class="prompt-card-header">
                     <span class="prompt-card-icon">${prompt.category ? this.getCategoryIcon(prompt.category) : '📝'}</span>
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
-                    ${this.selectMode ? `<button class="btn btn-ghost btn-icon" onclick="event.stopPropagation(); Components.deletePrompt('${prompt.id}')" style="margin-left: auto; color: var(--danger);">🗑️</button>` : ''}
+                    ${this.selectMode ? `<button class="btn btn-ghost btn-icon delete-card-btn" data-id="${prompt.id}" style="margin-left: auto; color: var(--danger);">🗑️</button>` : ''}
                 </div>
                 <p class="prompt-card-content">${this.escapeHtml(prompt.content.substring(0, 100))}</p>
                 ${prompt.tags && prompt.tags.length > 0 ? `
@@ -67,6 +66,30 @@ const Components = {
         `).join('');
 
         grid.innerHTML = headerHtml + cardsHtml;
+
+        // Add click handlers for cards
+        grid.querySelectorAll('.prompt-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                const id = card.dataset.id;
+                if (e.target.classList.contains('prompt-checkbox')) return;
+                if (e.target.classList.contains('delete-card-btn')) return;
+
+                if (this.selectMode) {
+                    this.toggleSelection(id);
+                } else {
+                    Store.setState({ activePromptId: id });
+                    App.openEditor(id);
+                }
+            });
+        });
+
+        // Add click handlers for delete buttons in select mode
+        grid.querySelectorAll('.delete-card-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deletePrompt(btn.dataset.id);
+            });
+        });
     },
 
     toggleSelectMode() {

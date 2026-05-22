@@ -295,6 +295,7 @@
     z-index: 1000;
     animation: fadeIn 0.2s ease;
     padding: var(--space-4);
+    backdrop-filter: blur(2px);
 }
 
 .modal {
