@@ -1067,3 +1067,125 @@
 .todo-delete:hover {
     transform: scale(1.1);
 }
+
+/* Todo View Header & Toggle */
+.todo-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-dark);
+    padding: 4px;
+    border-radius: var(--radius-md);
+}
+
+.view-btn {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.view-btn.active {
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.todo-view-container {
+    display: none;
+}
+
+.todo-view-container.active {
+    display: block;
+}
+
+/* Kanban Board */
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    height: calc(100vh - 220px);
+    overflow-x: auto;
+}
+
+.kanban-column {
+    flex: 1;
+    min-width: 280px;
+    background: var(--bg-dark);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.kanban-icon { font-size: 1.25rem; }
+.kanban-title { font-weight: 600; }
+.kanban-count {
+    margin-left: auto;
+    background: var(--surface);
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+}
+
+.kanban-cards {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.kanban-card {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    padding-left: 1rem;
+    cursor: pointer;
+    transition: all 150ms;
+    position: relative;
+}
+
+.kanban-card:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.priority-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.priority-indicator.priority-high { background: #EF4444; }
+.priority-indicator.priority-medium { background: #F59E0B; }
+.priority-indicator.priority-low { background: #22C55E; }
+
+.kanban-card-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.kanban-card-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}

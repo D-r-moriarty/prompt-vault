@@ -542,6 +542,60 @@ const Components = {
     closeTodoEditor() {
         const modal = document.getElementById('todo-editor-modal');
         if (modal) modal.remove();
+    },
+
+    // Kanban Board Rendering
+    renderKanbanBoard(todos) {
+        const container = document.getElementById('todo-kanban-view');
+        if (!container) return;
+
+        const columns = {
+            todo: { title: '待办', icon: '📋', todos: [] },
+            doing: { title: '进行中', icon: '🔄', todos: [] },
+            done: { title: '已完成', icon: '✅', todos: [] }
+        };
+
+        todos.forEach(todo => {
+            if (columns[todo.status]) {
+                columns[todo.status].todos.push(todo);
+            }
+        });
+
+        container.innerHTML = `
+            <div class="kanban-board">
+                ${Object.entries(columns).map(([key, col]) => `
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <span class="kanban-icon">${col.icon}</span>
+                            <span class="kanban-title">${col.title}</span>
+                            <span class="kanban-count">${col.todos.length}</span>
+                        </div>
+                        <div class="kanban-cards">
+                            ${col.todos.map(todo => `
+                                <div class="kanban-card" data-id="${todo.id}" onclick="App.openTodoEditor('${todo.id}')">
+                                    <div class="priority-indicator priority-${todo.priority}"></div>
+                                    <div class="kanban-card-title">${this.escapeHtml(todo.title)}</div>
+                                    ${todo.dueDate ? `<div class="kanban-card-meta">📅 ${todo.dueDate}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    // Calendar Month Rendering (placeholder for future)
+    renderCalendarMonth(year, month) {
+        const container = document.getElementById('todo-calendar-view');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="calendar-placeholder" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                <p>日历视图开发中...</p>
+            </div>
+        `;
     }
 };
 

@@ -131,13 +131,27 @@
                     </div>
                 </div>
                 <div id="todos-view" class="module-view">
-                    <div id="todo-list" class="todo-list">
-                        <!-- Todo items will be rendered here -->
+                    <div class="todo-view-header">
+                        <div class="view-toggle">
+                            <button id="view-list" class="view-btn active" onclick="App.switchTodoView('list')">📋 列表</button>
+                            <button id="view-kanban" class="view-btn" onclick="App.switchTodoView('kanban')">📊 看板</button>
+                            <button id="view-calendar" class="view-btn" onclick="App.switchTodoView('calendar')">📅 日历</button>
+                        </div>
+                        <button class="btn btn-primary" id="new-todo-btn-view">+ 新建任务</button>
                     </div>
-                    <div id="todo-empty-state" class="empty-state hidden">
-                        <div class="empty-state-icon">✓</div>
-                        <h3 class="empty-state-title">还没有 Todo</h3>
-                        <p class="empty-state-text">创建你的第一个 Todo 项目</p>
+                    <div id="todo-list-view" class="todo-view-container active">
+                        <div id="todo-list" class="todo-list"></div>
+                        <div id="todo-empty-state" class="empty-state hidden">
+                            <div class="empty-state-icon">✓</div>
+                            <h3 class="empty-state-title">还没有 Todo</h3>
+                            <p class="empty-state-text">创建你的第一个 Todo 项目</p>
+                        </div>
+                    </div>
+                    <div id="todo-kanban-view" class="todo-view-container">
+                        <!-- Kanban board will be rendered here -->
+                    </div>
+                    <div id="todo-calendar-view" class="todo-view-container">
+                        <!-- Calendar will be rendered here -->
                     </div>
                 </div>
             </main>

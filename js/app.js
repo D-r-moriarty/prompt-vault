@@ -673,6 +673,25 @@ const App = {
         Store.toggleTodoStatus(todoId);
         this.syncToGist();
         Components.renderTodoList(Store.state.todos);
+    },
+
+    switchTodoView(view) {
+        // Update button states
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`view-${view}`).classList.add('active');
+
+        // Update view container
+        document.querySelectorAll('.todo-view-container').forEach(v => v.classList.remove('active'));
+        document.getElementById(`todo-${view}-view`).classList.add('active');
+
+        // Render the view
+        if (view === 'kanban') {
+            Components.renderKanbanBoard(Store.state.todos);
+        } else if (view === 'calendar') {
+            Components.renderCalendarMonth(new Date().getFullYear(), new Date().getMonth() + 1);
+        } else {
+            Components.renderTodoList(Store.state.todos);
+        }
     }
 };
 
