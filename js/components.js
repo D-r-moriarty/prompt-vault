@@ -436,6 +436,112 @@ const Components = {
         const modal = document.getElementById('add-category-modal');
         if (!modal) return;
         modal.classList.remove('hidden');
+    },
+
+    // Todo List Rendering
+    renderTodoList(todos) {
+        const container = document.getElementById('todo-list');
+        const emptyState = document.getElementById('todo-empty-state');
+
+        if (!todos || todos.length === 0) {
+            container.innerHTML = '';
+            container.classList.add('hidden');
+            if (emptyState) emptyState.classList.remove('hidden');
+            return;
+        }
+
+        if (emptyState) emptyState.classList.add('hidden');
+        container.classList.remove('hidden');
+
+        // Sort by priority and due date
+        const sorted = [...todos].sort((a, b) => {
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            }
+            if (a.dueDate && b.dueDate) {
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            }
+            return 0;
+        });
+
+        container.innerHTML = sorted.map(todo => `
+            <div class="todo-card ${todo.status}" data-id="${todo.id}">
+                <div class="todo-checkbox" onclick="App.toggleTodo('${todo.id}')">
+                    ${todo.status === 'done' ? '☑️' : '☐'}
+                </div>
+                <div class="todo-content" onclick="App.openTodoEditor('${todo.id}')">
+                    <div class="todo-title ${todo.status === 'done' ? 'done' : ''}">${this.escapeHtml(todo.title)}</div>
+                    ${todo.description ? `<div class="todo-desc">${this.escapeHtml(todo.description.substring(0, 50))}</div>` : ''}
+                    <div class="todo-meta">
+                        <span class="priority priority-${todo.priority}">${todo.priority === 'high' ? '🔴' : todo.priority === 'medium' ? '🟡' : '🟢'}</span>
+                        ${todo.dueDate ? `<span class="due-date">📅 ${todo.dueDate}</span>` : ''}
+                        ${todo.dueTime ? `<span class="due-time">🕐 ${todo.dueTime}</span>` : ''}
+                    </div>
+                </div>
+                <button class="todo-delete" onclick="event.stopPropagation(); App.deleteTodo('${todo.id}')">🗑️</button>
+            </div>
+        `).join('');
+    },
+
+    // Todo Editor Modal
+    showTodoEditor(todo) {
+        const modal = document.createElement('div');
+        modal.id = 'todo-editor-modal';
+        modal.dataset.todoId = todo.id;
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">编辑任务</h2>
+                    <button class="modal-close" onclick="Components.closeTodoEditor()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <label class="editor-title-label">标题</label>
+                    <input type="text" id="todo-title-input" class="editor-title-input" value="${this.escapeHtml(todo.title)}" autofocus>
+                    <label class="editor-title-label" style="margin-top: 1rem;">描述</label>
+                    <textarea id="todo-desc-input" class="editor-content" rows="4" placeholder="任务描述...">${this.escapeHtml(todo.description)}</textarea>
+                    <div class="editor-meta">
+                        <div class="editor-field">
+                            <label class="editor-label">优先级</label>
+                            <select id="todo-priority-select" class="editor-select">
+                                <option value="high" ${todo.priority === 'high' ? 'selected' : ''}>🔴 高</option>
+                                <option value="medium" ${todo.priority === 'medium' ? 'selected' : ''}>🟡 中</option>
+                                <option value="low" ${todo.priority === 'low' ? 'selected' : ''}>🟢 低</option>
+                            </select>
+                        </div>
+                        <div class="editor-field">
+                            <label class="editor-label">截止日期</label>
+                            <input type="date" id="todo-due-date" class="editor-input" value="${todo.dueDate || ''}">
+                        </div>
+                        <div class="editor-field">
+                            <label class="editor-label">截止时间</label>
+                            <input type="time" id="todo-due-time" class="editor-input" value="${todo.dueTime || ''}">
+                        </div>
+                    </div>
+                    <div class="editor-meta">
+                        <div class="editor-field">
+                            <label class="editor-label">项目</label>
+                            <input type="text" id="todo-project-input" class="editor-input" value="${this.escapeHtml(todo.project || '')}" placeholder="项目名称">
+                        </div>
+                        <div class="editor-field">
+                            <label class="editor-label">标签（逗号分隔）</label>
+                            <input type="text" id="todo-tags-input" class="editor-input" value="${todo.tags.join(', ')}" placeholder="标签1, 标签2">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="Components.closeTodoEditor()">取消</button>
+                    <button class="btn btn-primary" onclick="App.saveTodo()">保存</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    },
+
+    closeTodoEditor() {
+        const modal = document.getElementById('todo-editor-modal');
+        if (modal) modal.remove();
     }
 };
 

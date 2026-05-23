@@ -102,6 +102,7 @@ const App = {
         safeOn('settings-btn', 'click', () => this.openSettings());
         safeOn('add-category-btn', 'click', () => this.openModal('add-category-modal'));
         safeOn('new-prompt-btn', 'click', () => this.createNewPrompt());
+        safeOn('new-todo-btn', 'click', () => this.createTodo());
 
         safeOn('search', 'input', (e) => {
             const results = Store.searchPrompts(e.target.value);
@@ -500,6 +501,17 @@ const App = {
         });
         document.getElementById(`${module}-view`).classList.add('active');
 
+        // Show/hide new button based on module
+        const newPromptBtn = document.getElementById('new-prompt-btn');
+        const newTodoBtn = document.getElementById('new-todo-btn');
+        if (module === 'todos') {
+            if (newPromptBtn) newPromptBtn.style.display = 'none';
+            if (newTodoBtn) newTodoBtn.style.display = 'flex';
+        } else {
+            if (newPromptBtn) newPromptBtn.style.display = 'flex';
+            if (newTodoBtn) newTodoBtn.style.display = 'none';
+        }
+
         // Render corresponding module
         if (module === 'todos') {
             Components.renderTodoList(Store.state.todos);
@@ -611,6 +623,56 @@ const App = {
 
         this.closeModal('export-modal');
         Components.showToast('导出成功', 'success');
+    },
+
+    // Todo CRUD Methods
+    createTodo() {
+        const todo = Store.addTodo({ title: '新任务' });
+        this.syncToGist();
+        this.openTodoEditor(todo.id);
+    },
+
+    openTodoEditor(todoId) {
+        const todo = Store.state.todos.find(t => t.id === todoId);
+        if (!todo) return;
+        Components.showTodoEditor(todo);
+    },
+
+    saveTodo() {
+        const title = document.getElementById('todo-title-input')?.value.trim();
+        const description = document.getElementById('todo-desc-input')?.value || '';
+        const priority = document.getElementById('todo-priority-select')?.value || 'medium';
+        const dueDate = document.getElementById('todo-due-date')?.value || '';
+        const dueTime = document.getElementById('todo-due-time')?.value || '';
+        const project = document.getElementById('todo-project-input')?.value || '';
+        const tags = (document.getElementById('todo-tags-input')?.value || '').split(',').map(t => t.trim()).filter(Boolean);
+
+        if (!title) {
+            Components.showToast('请输入任务标题', 'error');
+            return;
+        }
+
+        const todoId = document.getElementById('todo-editor-modal')?.dataset.todoId;
+        Store.updateTodo(todoId, { title, description, priority, dueDate, dueTime, project, tags });
+        this.syncToGist();
+        Components.closeTodoEditor();
+        Components.renderTodoList(Store.state.todos);
+        Components.showToast('任务已保存', 'success');
+    },
+
+    deleteTodo(todoId) {
+        if (confirm('确定要删除这个任务吗？')) {
+            Store.deleteTodo(todoId);
+            this.syncToGist();
+            Components.renderTodoList(Store.state.todos);
+            Components.showToast('任务已删除', 'success');
+        }
+    },
+
+    toggleTodo(todoId) {
+        Store.toggleTodoStatus(todoId);
+        this.syncToGist();
+        Components.renderTodoList(Store.state.todos);
     }
 };
 
