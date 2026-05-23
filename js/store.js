@@ -2,6 +2,7 @@
 const Store = {
     state: {
         prompts: [],
+        todos: [],
         categories: [
             { id: 'cat-1', name: '写作', icon: '📝', order: 1, isSystem: true },
             { id: 'cat-2', name: '代码', icon: '🔧', order: 2, isSystem: true },
@@ -42,6 +43,7 @@ const Store = {
 
     loadFromGist(data) {
         this.state.prompts = data.content.prompts || [];
+        this.state.todos = data.content.todos || [];
         this.state.categories = data.content.categories || this.state.categories;
         this.state.settings = data.content.settings || this.state.settings;
         this.state.gistId = data.id;
@@ -258,9 +260,67 @@ const Store = {
         return {
             version: '2.0',
             prompts: this.state.prompts,
+            todos: this.state.todos,
             categories: this.state.categories,
             settings: this.state.settings
         };
+    },
+
+    // Todo CRUD methods
+    addTodo(todo) {
+        const newTodo = {
+            id: crypto.randomUUID(),
+            title: todo.title || '新任务',
+            description: todo.description || '',
+            status: 'todo',
+            priority: todo.priority || 'medium',
+            dueDate: todo.dueDate || '',
+            dueTime: todo.dueTime || '',
+            tags: todo.tags || [],
+            project: todo.project || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        this.state.todos.push(newTodo);
+        this.notify();
+        return newTodo;
+    },
+
+    updateTodo(id, updates) {
+        const index = this.state.todos.findIndex(t => t.id === id);
+        if (index !== -1) {
+            this.state.todos[index] = {
+                ...this.state.todos[index],
+                ...updates,
+                updatedAt: new Date().toISOString()
+            };
+            this.notify();
+            return this.state.todos[index];
+        }
+        return null;
+    },
+
+    deleteTodo(id) {
+        this.state.todos = this.state.todos.filter(t => t.id !== id);
+        this.notify();
+    },
+
+    toggleTodoStatus(id) {
+        const todo = this.state.todos.find(t => t.id === id);
+        if (todo) {
+            const statusFlow = { 'todo': 'doing', 'doing': 'done', 'done': 'todo' };
+            todo.status = statusFlow[todo.status];
+            todo.updatedAt = new Date().toISOString();
+            this.notify();
+        }
+    },
+
+    getTodosByStatus(status) {
+        return this.state.todos.filter(t => t.status === status);
+    },
+
+    getTodosForDate(date) {
+        return this.state.todos.filter(t => t.dueDate === date);
     },
 
     // Batch move prompts to category
