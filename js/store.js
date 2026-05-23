@@ -3,10 +3,10 @@ const Store = {
     state: {
         prompts: [],
         categories: [
-            { id: 'cat-1', name: '写作', icon: '📝', order: 1 },
-            { id: 'cat-2', name: '代码', icon: '🔧', order: 2 },
-            { id: 'cat-3', name: '对话', icon: '💬', order: 3 },
-            { id: 'cat-4', name: '分析', icon: '📊', order: 4 }
+            { id: 'cat-1', name: '写作', icon: '📝', order: 1, isSystem: true },
+            { id: 'cat-2', name: '代码', icon: '🔧', order: 2, isSystem: true },
+            { id: 'cat-3', name: '对话', icon: '💬', order: 3, isSystem: true },
+            { id: 'cat-4', name: '分析', icon: '📊', order: 4, isSystem: true }
         ],
         activePromptId: null,
         activeCategoryId: null,
@@ -103,11 +103,9 @@ const Store = {
 
     deleteCategory(id) {
         const category = this.state.categories.find(c => c.id === id);
-        if (!category) return;
+        if (!category) return false;
 
-        const systemCats = ['cat-1', 'cat-2', 'cat-3', 'cat-4'];
-        if (systemCats.includes(id)) {
-            Components.showToast('不能删除系统分类', 'error');
+        if (category.isSystem) {
             return false;
         }
 

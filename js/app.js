@@ -355,8 +355,7 @@ const App = {
         const category = Store.state.categories.find(c => c.id === this.editingCategoryId);
         if (!category) return;
 
-        const systemCats = ['cat-1', 'cat-2', 'cat-3', 'cat-4'];
-        if (systemCats.includes(this.editingCategoryId)) {
+        if (category.isSystem) {
             Components.showToast('不能删除系统分类', 'error');
             return;
         }
@@ -536,7 +535,14 @@ const App = {
         const category = document.getElementById('import-category-select')?.value;
         const checkboxes = document.querySelectorAll('#import-preview .import-checkbox:checked');
         const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-        const selectedPrompts = selectedIndices.map(i => this.importData[i]);
+        const selectedPrompts = selectedIndices.map(i => {
+            const prompt = this.importData[i];
+            // Apply selected category if not empty
+            if (category) {
+                prompt.category = category;
+            }
+            return prompt;
+        });
 
         Store.addPrompts(selectedPrompts);
         this.syncToGist();

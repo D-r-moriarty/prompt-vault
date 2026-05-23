@@ -311,15 +311,21 @@ const AI = {
             return;
         }
 
-        container.innerHTML = this.suggestions.map((s) => {
+        // Helper to escape HTML
+        const escapeAttr = (str) => {
+            if (!str) return '';
+            return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        };
+
+        container.innerHTML = this.suggestions.map((s, index) => {
             if (s.type === 'uncategorized') {
                 return `
                     <div class="ai-suggestion-card">
                         <div class="ai-suggestion-header"><span>📁</span><span>未分类</span></div>
                         <div class="ai-suggestion-content">发现 ${s.prompts.length} 条提示词尚未分类</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.batchCategorize(${JSON.stringify(s.prompts).replace(/"/g, '&quot;')})">批量处理</button>
-                            <button class="ignore" onclick="AI.dismissSuggestion('uncategorized'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
+                            <button class="apply" data-action="batch-categorize" data-prompts='${escapeAttr(JSON.stringify(s.prompts))}'>批量处理</button>
+                            <button class="ignore" data-action="dismiss" data-type="uncategorized">忽略</button>
                         </div>
                     </div>
                 `;
@@ -328,10 +334,10 @@ const AI = {
                 return `
                     <div class="ai-suggestion-card">
                         <div class="ai-suggestion-header"><span>🔍</span><span>可能重复</span></div>
-                        <div class="ai-suggestion-content">${s.prompts.map(p => `"${p.title}"`).join(' 和 ')}</div>
+                        <div class="ai-suggestion-content">${s.prompts.map(p => `"${escapeAttr(p.title)}"`).join(' 和 ')}</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.showMergeSuggestion(${JSON.stringify(s.prompts).replace(/"/g, '&quot;')})">查看</button>
-                            <button class="ignore" onclick="AI.dismissSuggestion('similar'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
+                            <button class="apply" data-action="show-merge" data-prompts='${escapeAttr(JSON.stringify(s.prompts))}'>查看</button>
+                            <button class="ignore" data-action="dismiss" data-type="similar">忽略</button>
                         </div>
                     </div>
                 `;
@@ -340,10 +346,10 @@ const AI = {
                 return `
                     <div class="ai-suggestion-card">
                         <div class="ai-suggestion-header"><span>📁</span><span>建议归类</span></div>
-                        <div class="ai-suggestion-content"><strong>"${s.prompt.title}"</strong> → "${s.suggestedCategory}"</div>
+                        <div class="ai-suggestion-content"><strong>"${escapeAttr(s.prompt.title)}"</strong> → "${escapeAttr(s.suggestedCategory)}"</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.applyCategory('${s.prompt.id}', '${s.suggestedCategory}')">应用</button>
-                            <button class="ignore" onclick="AI.removeSuggestion('${s.prompt.id}', 'category-hint'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
+                            <button class="apply" data-action="apply-category" data-id="${escapeAttr(s.prompt.id)}" data-category="${escapeAttr(s.suggestedCategory)}">应用</button>
+                            <button class="ignore" data-action="remove" data-id="${escapeAttr(s.prompt.id)}" data-type="category-hint">忽略</button>
                         </div>
                     </div>
                 `;
@@ -352,16 +358,38 @@ const AI = {
                 return `
                     <div class="ai-suggestion-card">
                         <div class="ai-suggestion-header"><span>✏️</span><span>优化标题</span></div>
-                        <div class="ai-suggestion-content"><strong>"${s.prompt.title}"</strong> → "${s.suggestedTitle}"</div>
+                        <div class="ai-suggestion-content"><strong>"${escapeAttr(s.prompt.title)}"</strong> → "${escapeAttr(s.suggestedTitle)}"</div>
                         <div class="ai-suggestion-actions">
-                            <button class="apply" onclick="AI.applyTitle('${s.prompt.id}', '${s.suggestedTitle.replace(/'/g, "\\'")}')">应用</button>
-                            <button class="ignore" onclick="AI.removeSuggestion('${s.prompt.id}', 'title-hint'); AI.renderSuggestions(document.getElementById('suggestions-list'))">忽略</button>
+                            <button class="apply" data-action="apply-title" data-id="${escapeAttr(s.prompt.id)}" data-title="${escapeAttr(s.suggestedTitle)}">应用</button>
+                            <button class="ignore" data-action="remove" data-id="${escapeAttr(s.prompt.id)}" data-type="title-hint">忽略</button>
                         </div>
                     </div>
                 `;
             }
             return '';
         }).join('');
+
+        // Event delegation for AI suggestion actions
+        container.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                if (action === 'batch-categorize') {
+                    AI.batchCategorize(JSON.parse(btn.dataset.prompts));
+                } else if (action === 'dismiss') {
+                    AI.dismissSuggestion(btn.dataset.type);
+                    AI.renderSuggestions(container);
+                } else if (action === 'remove') {
+                    AI.removeSuggestion(btn.dataset.id, btn.dataset.type);
+                    AI.renderSuggestions(container);
+                } else if (action === 'apply-category') {
+                    AI.applyCategory(btn.dataset.id, btn.dataset.category);
+                } else if (action === 'apply-title') {
+                    AI.applyTitle(btn.dataset.id, btn.dataset.title);
+                } else if (action === 'show-merge') {
+                    AI.showMergeSuggestion(JSON.parse(btn.dataset.prompts));
+                }
+            });
+        });
     }
 };
 
