@@ -18,6 +18,7 @@ const App = {
 
         if (token) {
             await this.loadApp(token);
+            this.initNotifications();
         } else {
             this.showLogin();
         }
@@ -475,6 +476,39 @@ const App = {
             } else {
                 syncDot.classList.remove('syncing');
             }
+        }
+    },
+
+    initNotifications() {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    this.checkReminders();
+                }
+            });
+        }
+    },
+
+    checkReminders() {
+        setInterval(() => {
+            const now = new Date();
+            const currentDate = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().substring(0, 5);
+
+            Store.state.todos.forEach(todo => {
+                if (todo.dueDate === currentDate && todo.dueTime === currentTime && todo.status !== 'done') {
+                    this.showNotification(todo);
+                }
+            });
+        }, 60000); // Check every minute
+    },
+
+    showNotification(todo) {
+        if (document.hidden) {
+            new Notification('任务提醒', {
+                body: todo.title + (todo.dueTime ? ` - ${todo.dueTime}` : ''),
+                icon: '🔔'
+            });
         }
     },
 
