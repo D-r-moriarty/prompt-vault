@@ -1189,3 +1189,98 @@
     font-size: 0.75rem;
     color: var(--text-muted);
 }
+
+/* Calendar View */
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.calendar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.calendar-nav {
+    background: var(--bg-dark);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.calendar-nav:hover {
+    background: var(--surface-hover);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    background: var(--bg-dark);
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 0.5rem;
+}
+
+.calendar-day {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+    min-height: 80px;
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.calendar-day:hover {
+    background: var(--surface-hover);
+}
+
+.calendar-day.empty {
+    background: transparent;
+    cursor: default;
+}
+
+.calendar-day.today {
+    background: var(--primary-light);
+}
+
+.calendar-day-num {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.calendar-todos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.calendar-todo-item {
+    font-size: 0.625rem;
+    padding: 2px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-todo-item.priority-high { background: #FEE2E2; color: #DC2626; }
+.calendar-todo-item.priority-medium { background: #FEF3C7; color: #D97706; }
+.calendar-todo-item.priority-low { background: #DCFCE7; color: #16A34A; }
+
+.calendar-todo-more {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+}

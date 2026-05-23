@@ -692,6 +692,35 @@ const App = {
         } else {
             Components.renderTodoList(Store.state.todos);
         }
+    },
+
+    prevMonth() {
+        Calendar.currentMonth--;
+        if (Calendar.currentMonth < 1) {
+            Calendar.currentMonth = 12;
+            Calendar.currentYear--;
+        }
+        Components.renderCalendarMonth(Calendar.currentYear, Calendar.currentMonth);
+    },
+
+    nextMonth() {
+        Calendar.currentMonth++;
+        if (Calendar.currentMonth > 12) {
+            Calendar.currentMonth = 1;
+            Calendar.currentYear++;
+        }
+        Components.renderCalendarMonth(Calendar.currentYear, Calendar.currentMonth);
+    },
+
+    showTodosForDate(date) {
+        const todos = Store.getTodosForDate(date);
+        if (todos.length > 0) {
+            // Filter list view to show only this date's todos
+            const filteredTodos = Store.state.todos.filter(t => t.dueDate === date);
+            App.switchTodoView('list');
+            Components.renderTodoList(filteredTodos);
+            Components.showToast(`显示 ${date} 的 ${todos.length} 个任务`, 'info');
+        }
     }
 };
 

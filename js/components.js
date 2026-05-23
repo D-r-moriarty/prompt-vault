@@ -585,17 +585,9 @@ const Components = {
         `;
     },
 
-    // Calendar Month Rendering (placeholder for future)
+    // Calendar Month Rendering
     renderCalendarMonth(year, month) {
-        const container = document.getElementById('todo-calendar-view');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="calendar-placeholder" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
-                <p>日历视图开发中...</p>
-            </div>
-        `;
+        Calendar.renderMonth(year, month, Store.state.todos);
     }
 };
 
