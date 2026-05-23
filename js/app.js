@@ -487,6 +487,27 @@ const App = {
         if (modal) modal.classList.add('hidden');
     },
 
+    switchModule(module) {
+        // Update button states
+        document.querySelectorAll('.module-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(`module-${module}`).classList.add('active');
+
+        // Switch views
+        document.querySelectorAll('.module-view').forEach(view => {
+            view.classList.remove('active');
+        });
+        document.getElementById(`${module}-view`).classList.add('active');
+
+        // Render corresponding module
+        if (module === 'todos') {
+            Components.renderTodoList(Store.state.todos);
+        } else {
+            Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
+        }
+    },
+
     handleFile(file) {
         if (!file) return;
 

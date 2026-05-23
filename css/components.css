@@ -912,3 +912,103 @@
 .toggle.active::after {
     transform: translateX(24px);
 }
+
+/* Module Switch */
+.module-switch {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-dark);
+    padding: 4px;
+    border-radius: var(--radius-md);
+}
+
+.module-btn {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 150ms;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.module-btn:hover {
+    background: var(--surface-hover);
+}
+
+.module-btn.active {
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.module-view {
+    display: none;
+}
+
+.module-view.active {
+    display: block;
+}
+
+/* Todo List */
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.todo-item {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+}
+
+.todo-checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.todo-checkbox:hover {
+    border-color: var(--primary);
+}
+
+.todo-checkbox.checked {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.todo-content {
+    flex: 1;
+}
+
+.todo-title {
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: var(--space-1);
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.todo-meta {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}

@@ -14,9 +14,13 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <div class="logo">
-                    <span class="logo-icon">🔧</span>
-                    <span>提示词工坊</span>
+                <div class="module-switch">
+                    <button id="module-prompts" class="module-btn active" onclick="App.switchModule('prompts')">
+                        <span>🔧</span> 提示词
+                    </button>
+                    <button id="module-todos" class="module-btn" onclick="App.switchModule('todos')">
+                        <span>✓</span> Todo
+                    </button>
                 </div>
             </div>
 
@@ -108,18 +112,30 @@
 
             <!-- Content Area -->
             <main class="content-area">
-                <div id="loading-state" class="loading-state">
-                    <div class="loading-spinner"></div>
-                    <p>加载中...</p>
-                </div>
-                <div id="prompt-grid" class="prompt-grid hidden">
-                    <!-- Prompt cards will be rendered here -->
-                </div>
+                <div id="prompts-view" class="module-view active">
+                    <div id="loading-state" class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                    <div id="prompt-grid" class="prompt-grid hidden">
+                        <!-- Prompt cards will be rendered here -->
+                    </div>
 
-                <div id="empty-state" class="empty-state hidden">
-                    <div class="empty-state-icon">📝</div>
-                    <h3 class="empty-state-title">还没有提示词</h3>
-                    <p class="empty-state-text">点击右上角的"新建"按钮创建第一个提示词</p>
+                    <div id="empty-state" class="empty-state hidden">
+                        <div class="empty-state-icon">📝</div>
+                        <h3 class="empty-state-title">还没有提示词</h3>
+                        <p class="empty-state-text">点击右上角的"新建"按钮创建第一个提示词</p>
+                    </div>
+                </div>
+                <div id="todos-view" class="module-view">
+                    <div id="todo-list" class="todo-list">
+                        <!-- Todo items will be rendered here -->
+                    </div>
+                    <div id="todo-empty-state" class="empty-state hidden">
+                        <div class="empty-state-icon">✓</div>
+                        <h3 class="empty-state-title">还没有 Todo</h3>
+                        <p class="empty-state-text">创建你的第一个 Todo 项目</p>
+                    </div>
                 </div>
             </main>
         </div>
