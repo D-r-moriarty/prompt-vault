@@ -229,15 +229,15 @@
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
 }
 
-/* Text selection styling */
-.editor-title-input::selection,
-.editor-content::selection {
+/* Text selection styling - ID selector for higher specificity */
+#prompt-title-input::selection,
+#prompt-content-input::selection {
     background: #F59E0B !important;
     color: #FFFFFF !important;
 }
 
-.editor-title-input:focus::selection,
-.editor-content:focus::selection {
+#prompt-title-input:focus::selection,
+#prompt-content-input:focus::selection {
     background: #D97706 !important;
     color: #FFFFFF !important;
 }
