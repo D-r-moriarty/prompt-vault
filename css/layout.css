@@ -290,9 +290,21 @@
         display: none; /* 移动端隐藏按钮文字，只显示图标 */
     }
 
-    /* Sidebar - 固定隐藏，因为Todo模式已隐藏 */
+    /* Sidebar - 默认隐藏，移动端可通过按钮切换显示 */
     .sidebar {
         display: none;
+    }
+
+    .sidebar:not(.hidden) {
+        display: block;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: calc(100vh - 60px);
+        z-index: 99;
+        background: var(--paper-dark);
     }
 
     /* Content Area */

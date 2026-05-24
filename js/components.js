@@ -44,7 +44,8 @@ const Components = {
         }
 
         const cardsHtml = prompts.map((prompt, index) => `
-            <div class="prompt-card" data-id="${prompt.id}" data-index="${index}" onclick="Components.handleCardClick(event, '${prompt.id}')">
+            <div class="prompt-card ${this.selectedPrompts.has(prompt.id) ? 'selected' : ''}" data-id="${prompt.id}" data-index="${index}" onclick="Components.handleCardClick(event, '${prompt.id}')">
+                <div class="prompt-checkbox">${this.selectedPrompts.has(prompt.id) ? '✓' : ''}</div>
                 <div class="prompt-card-header">
                     <span class="prompt-card-icon">${prompt.category ? this.getCategoryIcon(prompt.category) : '📝'}</span>
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
