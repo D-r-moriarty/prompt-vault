@@ -44,13 +44,13 @@ const Components = {
         }
 
         const cardsHtml = prompts.map((prompt, index) => `
-            <div class="prompt-card" data-id="${prompt.id}" data-index="${index}">
-                <div class="prompt-card-header" onclick="App.openEditor('${prompt.id}')">
+            <div class="prompt-card" data-id="${prompt.id}" data-index="${index}" onclick="Components.handleCardClick(event, '${prompt.id}')">
+                <div class="prompt-card-header">
                     <span class="prompt-card-icon">${prompt.category ? this.getCategoryIcon(prompt.category) : '📝'}</span>
                     <h3 class="prompt-card-title">${this.escapeHtml(prompt.title)}</h3>
                     ${this.selectMode ? `<button class="btn btn-ghost btn-icon delete-card-btn" data-id="${prompt.id}" style="margin-left: auto; color: var(--danger);">🗑️</button>` : ''}
                 </div>
-                <div class="prompt-card-body" onmousedown="Components.handleCardClick(event, '${prompt.id}')">
+                <div class="prompt-card-body">
                     <p class="prompt-card-content">${this.escapeHtml(prompt.content.substring(0, 150))}</p>
                 </div>
                 ${prompt.tags && prompt.tags.length > 0 ? `
@@ -68,23 +68,6 @@ const Components = {
 
         grid.innerHTML = headerHtml + cardsHtml;
 
-        // Add click handlers for cards
-        grid.querySelectorAll('.prompt-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                const id = card.dataset.id;
-                if (e.target.classList.contains('delete-card-btn')) return;
-
-                if (this.selectMode) {
-                    // In select mode, toggle selection
-                    this.toggleSelection(id);
-                } else {
-                    // Not in select mode, open editor
-                    Store.setState({ activePromptId: id });
-                    App.openEditor(id);
-                }
-            });
-        });
-
         // Add click handlers for delete buttons in select mode
         grid.querySelectorAll('.delete-card-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -92,7 +75,6 @@ const Components = {
                 this.deletePrompt(btn.dataset.id);
             });
         });
-    },
 
     toggleSelectMode() {
         this.selectMode = !this.selectMode;
@@ -113,12 +95,15 @@ const Components = {
     },
 
     handleCardClick(event, id) {
-        if (event.target.classList.contains('prompt-checkbox')) return;
+        // Don't handle if clicking on delete button (has its own handler)
+        if (event.target.classList.contains('delete-card-btn')) return;
         if (event.target.classList.contains('btn-icon')) return;
 
         if (this.selectMode) {
+            // In select mode, toggle selection
             this.toggleSelection(id);
         } else {
+            // Not in select mode, open editor
             Store.setState({ activePromptId: id });
             App.openEditor(id);
         }

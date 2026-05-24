@@ -741,12 +741,16 @@
 }
 
 .select-mode .prompt-card:hover {
-    transform: none;
-    box-shadow: var(--shadow);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
 }
 
 .select-mode .prompt-card.selected:hover {
-    transform: none;
+    transform: translateY(-3px);
+}
+
+.select-mode .prompt-card {
+    cursor: pointer;
 }
 
 /* Footer */
