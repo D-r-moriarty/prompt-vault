@@ -75,6 +75,7 @@ const Components = {
                 this.deletePrompt(btn.dataset.id);
             });
         });
+    },
 
     toggleSelectMode() {
         this.selectMode = !this.selectMode;
