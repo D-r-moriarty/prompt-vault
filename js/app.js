@@ -535,6 +535,16 @@ const App = {
         });
         document.getElementById(`${module}-view`).classList.add('active');
 
+        // Show/hide sidebar sections based on module
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            if (module === 'todos') {
+                sidebar.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('hidden');
+            }
+        }
+
         // Show/hide new button based on module
         const newPromptBtn = document.getElementById('new-prompt-btn');
         const newTodoBtn = document.getElementById('new-todo-btn');

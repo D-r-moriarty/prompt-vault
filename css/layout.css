@@ -99,6 +99,11 @@
     height: calc(100vh - 65px);
     position: sticky;
     top: 65px;
+    transition: all 200ms ease;
+}
+
+.sidebar.hidden {
+    display: none;
 }
 
 .sidebar-section {
