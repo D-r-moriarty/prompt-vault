@@ -251,35 +251,143 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    /* Header - 简化移动端 */
     .header {
-        padding: var(--space-3) var(--space-4);
+        padding: var(--space-2) var(--space-3);
+        flex-wrap: wrap;
+    }
+
+    .header-left {
+        order: 1;
+    }
+
+    .header-right {
+        order: 2;
+        margin-left: auto;
     }
 
     .header-center {
+        display: none; /* 移动端隐藏搜索框 */
+    }
+
+    /* Module switch - 移动端调整 */
+    .module-switch {
+        gap: 2px;
+    }
+
+    .module-btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+
+    /* 移动端按钮调整 */
+    .header-right .btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+
+    .header-right .btn span {
+        display: none; /* 移动端隐藏按钮文字，只显示图标 */
+    }
+
+    /* Sidebar - 固定隐藏，因为Todo模式已隐藏 */
+    .sidebar {
         display: none;
     }
 
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100vh;
-        width: 280px;
-        z-index: 200;
-        transform: translateX(-100%);
-        transition: transform var(--transition-normal);
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
+    /* Content Area */
     .content-area {
+        padding: var(--space-3);
+        min-height: calc(100vh - 60px);
+    }
+
+    /* Prompt Grid - 单列 */
+    .prompt-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+
+    .prompt-card {
+        padding: var(--space-3);
+    }
+
+    /* Todo List - 移动端优化 */
+    .todo-view-header {
+        flex-direction: column;
+        gap: var(--space-3);
+        align-items: flex-start;
+    }
+
+    .view-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .todo-list {
+        padding: 0;
+    }
+
+    .todo-card {
+        padding: var(--space-3);
+        flex-wrap: nowrap;
+    }
+
+    .todo-checkbox {
+        font-size: 1.5rem;
+        padding: var(--space-1);
+    }
+
+    /* Kanban - 横向滚动 */
+    .kanban-board {
+        overflow-x: auto;
+        gap: var(--space-2);
+    }
+
+    .kanban-column {
+        min-width: 260px;
+        flex-shrink: 0;
+    }
+
+    /* Calendar - 调整格子大小 */
+    .calendar-day {
+        min-height: 60px;
+        padding: var(--space-2);
+    }
+
+    .calendar-todo-item {
+        font-size: 0.5rem;
+    }
+
+    /* Sync Status - 移动端位置 */
+    .sync-status-bar {
+        bottom: var(--space-3);
+        right: var(--space-3);
+        font-size: 0.75rem;
+        padding: var(--space-1) var(--space-3);
+    }
+
+    /* Modal - 全屏显示 */
+    .modal {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .modal-overlay {
+        padding: 0;
+    }
+
+    .modal-body {
         padding: var(--space-4);
     }
 
-    .prompt-grid {
-        grid-template-columns: 1fr;
+    .editor-title-input {
+        font-size: 1.125rem;
+    }
+
+    .editor-content {
+        min-height: 200px;
     }
 }
 

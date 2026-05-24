@@ -1,5 +1,15 @@
 /* Component Styles - Updated for Multiple Themes */
 
+/* Base */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
 /* Buttons */
 .btn {
     display: inline-flex;
@@ -13,6 +23,27 @@
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* 移动端按钮样式 */
+@media (max-width: 768px) {
+    .btn {
+        padding: var(--space-2) var(--space-3);
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
 }
 
 .btn-primary {
