@@ -20,6 +20,9 @@ const App = {
             await this.loadApp(token);
             this.initNotifications();
         } else {
+            // No token - hide loading, show login
+            const loadingState = document.getElementById('loading-state');
+            if (loadingState) loadingState.classList.add('hidden');
             this.showLogin();
         }
     },
@@ -86,6 +89,10 @@ const App = {
                 Store.loadFromGist({ id: data.id, filename: 'prompts.json', content: data.content });
             }
             this.updateSyncStatus('已同步', false);
+            // Hide loading state and render prompts
+            const loadingState = document.getElementById('loading-state');
+            if (loadingState) loadingState.classList.add('hidden');
+            Components.renderPromptGrid(Store.state.prompts, Store.state.activePromptId);
         } catch (error) {
             console.error('Failed to load data:', error);
             Components.showToast('加载数据失败，请检查 Token', 'error');

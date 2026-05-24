@@ -38,12 +38,6 @@ html {
         min-height: 44px;
         min-width: 44px;
     }
-
-    .btn-primary {
-        background: var(--primary);
-        color: white;
-        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-    }
 }
 
 .btn-primary {
